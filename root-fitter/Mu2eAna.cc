@@ -8,7 +8,7 @@ Driving function for analysis
 
 using namespace std;
 
-void ImportNTuple(std::string filename){
+void ImportNTuple(std::string filename, std::string treename){
 
 }
 
@@ -19,9 +19,10 @@ void RunFit(){
 
 int main(int argc, char* argv[]){
   std::cout<<"========== Welcome to Mu2eAna =========="<<std::endl;
-  std::cout<<"-------- Analyzing "<<argv[1]<<"s ------------"<<std::endl;
+  std::cout<<"-------- Analyzing "<<argv[1]<<" ------------"<<std::endl;
 
   TString filename = argv[1]; // TrkAna NTuple
+  TString treename = argv[2]; //TrkAna treename
   RunFit();
   return 0;
 }

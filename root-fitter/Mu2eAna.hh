@@ -1,3 +1,4 @@
+
 #ifndef _Mu2eAna_HH
 #define _Mu2eAna_HH
 
@@ -15,6 +16,7 @@ class Mu2eAna  {
     virtual ~Mu2eAna() = default;
     #ifndef __CINT__
     int main(int argc, char* argv[]);
+    void ImportNTuple(std::string filename, std::string treename);
     void RunFit();
     #endif
     ClassDef(Mu2eAna, 0);
