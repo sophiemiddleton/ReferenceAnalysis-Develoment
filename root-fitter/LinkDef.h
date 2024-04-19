@@ -4,5 +4,5 @@
 #pragma link off all functions;
 #pragma link C++ nestedclasses;
 
-#pragma link C++ class Mu2eAna+;
+#pragma link C++ class Likelihood+;
 #endif
