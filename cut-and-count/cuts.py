@@ -8,22 +8,6 @@ class Cuts() :
     def __init__(self, opt = 'su2020', use_CRV = False): #default is su2020
         self.use_CRV = use_CRV
         self.Cut_List = {}
-        if opt is 'cd3':
-            self.Cut_List =  {
-                  "de.status" : [0., float("inf")] ,  #goodfit
-                  "trigbits&0x208" : [0., float("inf")], #triggered
-                  "de.t0" : [700., 1695],    #inTimeWindow
-                  "deent.td" : [0.577350, 1.000],    #inTanDipCut
-                  "deent.d0" : [-80., 105.], #inD0Cut
-                  "inMaxRCut" : [450., 680.],
-                  "useCRV"  : use_CRV,
-                  "noCRVHit" : [-50.0 , 150.0],
-                  "dequal.TrkQual" : [0.8, float("inf")],  #TrkQual
-                  "dequal.TrkPID" : [0.95, float("inf")],  #TrkPID
-                  "ue.status" : [float("-inf"), 0.],   #noUpstream
-                  "deent.mom" : [95., float("inf")]   #recomom
-
-                }
 
         if opt is 'su2020':
                 self.Cut_List =  {
