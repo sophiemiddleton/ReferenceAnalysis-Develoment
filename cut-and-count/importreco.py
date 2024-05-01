@@ -27,7 +27,7 @@ class ImportRecoData :
         branches = trkana.arrays(filter_name=["/"+str(leafname)+"/", "/"+str(leafname_field)+"/"])
         return branches
 
-    def PlotRecoMom(self, branches, low, hi ):
+    def PlotRecoMom(self, branches, low, hi, time):
         """ make basic reco mom plot, no position requirement """
         branches['demfit_mom'] = np.sqrt((branches['demfit']['mom']['fCoordinates']['fX'])**2 + (branches['demfit']['mom']['fCoordinates']['fY'])**2 + (branches['demfit']['mom']['fCoordinates']['fZ'])**2)
         fig, ax = plt.subplots(1,1)
@@ -44,10 +44,8 @@ class ImportRecoData :
         ax.grid(True)
         ax.legend()
         plt.show()
-        
-        
-        
-    def PlotRecoMomEnt(self, branches, low, hi):
+       
+    def PlotRecoMomEnt(self, branches, low, hi, time):
         """ make basic reco mom plot, requirement for tracker entrance """
         branches['demfit_mom'] = np.sqrt((branches['demfit']['mom']['fCoordinates']['fX'])**2 + (branches['demfit']['mom']['fCoordinates']['fY'])**2 + (branches['demfit']['mom']['fCoordinates']['fZ'])**2)
         trk_ent_mask = (branches['demfit']['sid']==0)

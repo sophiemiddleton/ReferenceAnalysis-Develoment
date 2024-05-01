@@ -35,8 +35,8 @@ def Run(mom_low, mom_high,):
     # extract reco mom for Loop Helix:
     branches = recodata.Import_RecoFits("demfit", "demlh")
     # make a histogram of this:
-    recodata.PlotRecoMom(branches, options.mom_low, options.mom_hi)
-    recodata.PlotRecoMomEnt(branches, options.mom_low, options.mom_hi)
+    recodata.PlotRecoMom(branches, options.mom_low, options.mom_hi, options.time_low)
+    recodata.PlotRecoMomEnt(branches, options.mom_low, options.mom_hi, options.time_low)
     
 if __name__ == "__main__":
 
@@ -49,7 +49,7 @@ if __name__ == "__main__":
     parser.add_option('-n','--branchname', dest='branchname', default = 'trkana', help='branchname', metavar='bdir')
     parser.add_option('-l','--mom_low', dest='mom_low', default = '95', help='mom_low', metavar='ldir')
     parser.add_option('-g','--mom_hi', dest='mom_hi', default = '115', help='mom_hi', metavar='hdir')
-
+    parser.add_option('-a','--time_low', dest='time_low', default = '0', help='time_low', metavar='hdir')
     (options, args) = parser.parse_args()
 
     main(options, args)
