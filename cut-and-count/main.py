@@ -27,9 +27,9 @@ def main(options, args):
     #print("Users Options:", options.filelist, options.treename, options.branchname)
     print("===================calculating stats....please wait....==============")
 
-    Run(options.mom_low, options.mom_hi)
+    Run()
 
-def Run(mom_low, mom_high,):
+def Run():
     # Import the data into panadas dataframes:
     recodata = ImportRecoData(options.filelist, options.treename, options.branchname)
     # extract reco mom for Loop Helix:
