@@ -16,8 +16,9 @@ class Mu2eAna  {
     virtual ~Mu2eAna() = default;
     #ifndef __CINT__
     int main(int argc, char* argv[]);
-    void ImportNTuple(std::string filename, std::string treename);
-    void RunFit();
+    TTree *ImportNTuple(TString filename);
+    TH1F *GetRecoHist(TTree* trkana, bool usecuts);
+    void RunFit(TString File, TString Run, bool cuts);
     #endif
     ClassDef(Mu2eAna, 0);
 };

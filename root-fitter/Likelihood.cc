@@ -6,28 +6,74 @@ ClassImp(Likelihood);
   return g;
 }*/
 
-TString Fpath = "/exp/mu2e/app/users/sophie/ProductionEnsembles_v2/py-ana/trkana/";
 
+TString Likelihood::GetLabel(TString run){
+  TString pass;
+  if (run == "pass0a"){
+      pass = "CE-DIO(p>95MeV/c)-MixBB-1month";
+  }
+  else if (run == "pass0b"){
+      pass = "CE-DIO(p>95MeV/c)-CRY-1BB-1week";
+  } else {
+      pass = "unknown";
+  }
+  return pass;
+}
 
-void Likelihood::CalculateLikelihood()//TString filename, bool usecuts)
-{
+void Likelihood::MakePlots(RooRealVar recomom, RooDataHist chMom, RooAddPdf fitFun, TString tag, TString recocuts){
     TCanvas *can = new TCanvas("can", "", 100, 100, 600, 600);
-    //StyleSetting();
-    TString filename = "nts.mu2e.trkana-reco-CE-DIO-1month.MDC2020ad_perfect_v1_2.0.tka";
-    bool usecuts = true;
+
+    RooPlot *chFrame = recomom.frame(Title(""));
+    chMom.plotOn(chFrame, MarkerColor(kBlack), LineColor(kBlack), MarkerSize(0.5), Name("chMom"));
+
+    //Sig.plotOn(chFrame, LineColor(kRed), LineStyle(1), Name("sig"));
+    //DIO.plotOn(chFrame, LineColor(kBlue), LineStyle(1), Name("dio"));
+    fitFun.plotOn(chFrame, LineColor(kGreen), LineStyle(1), Name("combFit"));
+
+    float chiSq = chFrame->chiSquare(11);
+    std::cout << "chi2: " << chiSq << "; Probability: " << Prob(chiSq, 151) << std::endl;
+    TPaveLabel *pchi2 = new TPaveLabel(0.5, 0.70, 0.35, 0.80, Form("#chi^{2}/ndf = %4.2f", chiSq), "brNDC");
+    pchi2 -> SetFillStyle(0);
+    pchi2 -> SetBorderSize(0);
+    pchi2 -> SetTextSize(0.25);
+    pchi2 -> SetTextColor(kBlack);
+    pchi2 -> SetFillColor(kWhite);
+    chFrame -> addObject(pchi2);
+    auto *th1 = new TLatex(105 - 1, 100,"Mu2e Mock Data 2024");
+    th1->SetTextAlign(31); 
+    th1->SetTextSize(0.05);
+    auto *th2 = new TLatex(105 - 1 , 50, tag);
+    th2->SetTextAlign(31); 
+    th2->SetTextSize(0.03);
+    auto *th3 = new TLatex(105 - 1 , 20, recocuts);
+    th3->SetTextAlign(31); 
+    th3->SetTextSize(0.03);
+
+    chFrame -> SetYTitle("Events per 25 keV");
+    chFrame -> SetYTitle("Reconstructed Mom at TrkEnt [MeV/c]");
+    can -> Draw();
+    chFrame -> Draw("same");
+    th1->Draw("same");
+    th2->Draw("same");
+    th3->Draw("same");
+    can -> SetLogy();
+    can -> Update();
+    can -> SaveAs("CombinedFitResult.root");
+}
+
+//RooCBShape CE(RooRealVar recomom){}
+
+RooFitResult *Likelihood::CalculateLikelihood(TH1F *hist_mom1, TString runname, bool usecuts)
+{
     TString recocuts = "";
-    
+
     if(usecuts){
       recocuts = "demfit.sid==0 && demlh.t0 > 700 && demlh.t0err < 0.9 && demtrkqual.result > 0.2 && dem.nactive > 20 && demlh.maxr < 680";
     }
-    TString tag = "CE-DIO(p>95MeV/c)-1BB-1month";//GetLabel(run);
-    TFile *f = TFile::Open(Fpath+filename);
-    TTree *trkana = (TTree*)f->Get("TrkAna/trkana");               
-  
-    TH1F* hist_mom1 = new TH1F("hist_mom1", "", 100, 95,105);
-    trkana->Draw("demfit.mom.R()>>hist_mom1", recocuts, "HIST");
-
-    RooRealVar recomom("recomom", "reco mom [MeV/c]", 95, 105);
+    TString tag = GetLabel(runname);
+    
+    // make RooFit objects
+    RooRealVar recomom("recomom", "reco mom [MeV/c]", 95, 105); //TODO - should make these input parameters
     RooDataHist chMom("chMom", "chMom", recomom, hist_mom1);
 
     // CE signal shape:
@@ -46,52 +92,14 @@ void Likelihood::CalculateLikelihood()//TString filename, bool usecuts)
     RooRealVar frdio("frdio", "fraction in dio region", 0.0, 0.0, 100000);
     RooPol58 DIO("DIO", "dio tail", recomom, a5, a6, a7, a8);
     
-    //combined
+    //combined binned ML (extended)
     RooAddPdf fitFun("fitFun", "Sig + DIO", RooArgList(Sig,DIO), RooArgList(frsig, frdio));
     RooFitResult *fitRes = fitFun.chi2FitTo(chMom, Range(95, 105), Strategy(3), PrintLevel(1), Hesse(kTRUE), Extended(), Save());
     
-    // make plots:
-    RooPlot *chFrame = recomom.frame(Title(""));
-    chMom.plotOn(chFrame, MarkerColor(kBlack), LineColor(kBlack), MarkerSize(0.5), Name("chMom"));
-    
-    Sig.plotOn(chFrame, LineColor(kRed), LineStyle(1), Name("sig"));
-    DIO.plotOn(chFrame, LineColor(kBlue), LineStyle(1), Name("dio"));
-    fitFun.plotOn(chFrame, LineColor(kGreen), LineStyle(1), Name("combFit"));
-    
-    float chiSq = chFrame->chiSquare(11);
+    MakePlots(recomom, chMom, fitFun, tag, recocuts);
 
-    TPaveLabel *pchi2 = new TPaveLabel(0.5, 0.70, 0.35, 0.80, Form("#chi^{2}/ndf = %4.2f", chiSq), "brNDC");
-    pchi2 -> SetFillStyle(0);
-    pchi2 -> SetBorderSize(0);
-    pchi2 -> SetTextSize(0.25);
-    pchi2 -> SetTextColor(kBlack);
-    pchi2 -> SetFillColor(kWhite);
-    chFrame -> addObject(pchi2);
-    auto *th1 = new TLatex(105 - 1, 100,"Mu2e Mock Data 2024");
-    th1->SetTextAlign(31); 
-    th1->SetTextSize(0.05);
-    auto *th2 = new TLatex(105 - 1 , 50, tag);
-    th2->SetTextAlign(31); 
-    th2->SetTextSize(0.03);
-    auto *th3 = new TLatex(105 - 1 , 20, recocuts);
-    th3->SetTextAlign(31); 
-    th3->SetTextSize(0.03);
- 
-
-    std::cout << "chi2: " << chiSq << "; Probability: " << Prob(chiSq, 151) << std::endl;
     std::cout << "signal content " << Sig.getNorm() << std::endl;
     std::cout << "dio content " << DIO.getNorm() << std::endl;
 
-    chFrame -> SetYTitle("Events per 25 keV");
-    chFrame -> SetYTitle("Reconstructed Mom at TrkEnt [MeV/c]");
-    can -> Draw();
-    chFrame -> Draw("same");
-    th1->Draw("same");
-    th2->Draw("same");
-    th3->Draw("same");
-    can -> SetLogy();
-    can -> Update();
-    can -> SaveAs("hist.root");
-    std::cout<<fitRes<<std::endl;
-    f -> Close();
+    return fitRes;
 }

@@ -57,7 +57,9 @@ class Likelihood  {
     Likelihood(const Likelihood &);
     Likelihood& operator=(const Likelihood &);
     virtual ~Likelihood() = default;
-    void CalculateLikelihood();//TString filename, bool usecuts);
+    TString GetLabel(TString run);
+    void MakePlots(RooRealVar recomom, RooDataHist chMom, RooAddPdf fitFun, TString tag, TString recocuts);
+    RooFitResult *CalculateLikelihood(TH1F *hist_mom1, TString runname, bool usecuts);
     #endif
     ClassDef (Likelihood,0);
 
