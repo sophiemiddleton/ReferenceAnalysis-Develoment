@@ -61,7 +61,26 @@ void Likelihood::MakePlots(RooRealVar recomom, RooDataHist chMom, RooAddPdf fitF
     can -> SaveAs("CombinedFitResult.root");
 }
 
-//RooCBShape CE(RooRealVar recomom){}
+std::tuple <RooRealVar, RooRealVar, RooRealVar, RooRealVar>  Likelihood::CE_parameters(){
+    // CE parameters (assume simple crystal ball for now)
+    RooRealVar fMean("mean", "mean", 104, 103, 105);
+    RooRealVar fWidth("sigma", "sigma", 0.5, 0.1, 1.0);
+    RooRealVar fcbalpha("fcbalpha", "fcbalpha", 2.5, 0.05, 20.0);
+    RooRealVar fcbndeg("fcbndeg", "fcbndeg", 10., 0.25, 80.);
+    std::tuple <RooRealVar, RooRealVar, RooRealVar, RooRealVar> par_tuple = make_tuple(fMean,fWidth,fcbalpha,fcbndeg);
+    return par_tuple;
+}
+
+std::tuple <RooRealVar, RooRealVar, RooRealVar, RooRealVar>  Likelihood::DIO_parameters(){
+    RooRealVar a5("a5", "a5", 8.6434e-17, 8.5e-17, 8.7e-17);
+    RooRealVar a6("a6", "a6", 1.16874e-17, 1.1e-17, 1.2e-17);
+    RooRealVar a7("a7", "a7", -1.87828e-19, -1.9e-19, -1.8e-19);
+    RooRealVar a8("a8", "a8", 9.16327e-20, 9.1e-20, 9.2e-20);
+    std::tuple <RooRealVar, RooRealVar, RooRealVar, RooRealVar> par_tuple = make_tuple(a5,a6,a7,a8);
+    return par_tuple;
+    
+    
+}
 
 RooFitResult *Likelihood::CalculateLikelihood(TH1F *hist_mom1, TString runname, bool usecuts)
 {
@@ -77,29 +96,19 @@ RooFitResult *Likelihood::CalculateLikelihood(TH1F *hist_mom1, TString runname, 
     RooDataHist chMom("chMom", "chMom", recomom, hist_mom1);
 
     // CE signal shape:
-    RooRealVar fcbalpha("fcbalpha", "fcbalpha", 2.5, 0.05, 20.0);
-    RooRealVar fcbndeg("fcbndeg", "fcbndeg", 10., 0.25, 80.);
-    RooRealVar fMean("mean", "mean", 104, 103, 105);
-    RooRealVar fWidth("sigma", "sigma", 0.5, 0.1, 1.0);
-    RooCBShape Sig("Sig", "signal peak", recomom, fMean, fWidth, fcbalpha, fcbndeg);
-    RooRealVar frsig("frsig", "fraction in signal region", 0.0, 0.0, 100);
-    
+    std::tuple <RooRealVar, RooRealVar, RooRealVar, RooRealVar> CEparams = CE_parameters();
+    RooCBShape Sig("Sig", "signal peak", recomom, get<0>(CEparams), get<1>(CEparams),get<2>(CEparams),get<3>(CEparams));
+    RooRealVar nsig("nsig", "number of signal events", 0.0, 0.0, 100);
+   
     // DIO shape:
-    RooRealVar a5("a5", "a5", 8.6434e-17, 8.5e-17, 8.7e-17);
-    RooRealVar a6("a6", "a6", 1.16874e-17, 1.1e-17, 1.2e-17);
-    RooRealVar a7("a7", "a7", -1.87828e-19, -1.9e-19, -1.8e-19);
-    RooRealVar a8("a8", "a8", 9.16327e-20, 9.1e-20, 9.2e-20);
-    RooRealVar frdio("frdio", "fraction in dio region", 0.0, 0.0, 100000);
-    RooPol58 DIO("DIO", "dio tail", recomom, a5, a6, a7, a8);
+    std::tuple <RooRealVar, RooRealVar, RooRealVar, RooRealVar> DIOparams = DIO_parameters();
+    RooRealVar ndio("ndio", "number in dio region", 0.0, 0.0, 100000);
+    RooPol58 DIO("DIO", "dio tail", recomom, get<0>(DIOparams), get<1>(DIOparams),get<2>(DIOparams),get<3>(DIOparams));
     
     //combined binned ML (extended)
-    RooAddPdf fitFun("fitFun", "Sig + DIO", RooArgList(Sig,DIO), RooArgList(frsig, frdio));
+    RooAddPdf fitFun("fitFun", "Sig + DIO", RooArgList(Sig,DIO), RooArgList(nsig, ndio));
     RooFitResult *fitRes = fitFun.chi2FitTo(chMom, Range(95, 105), Strategy(3), PrintLevel(1), Hesse(kTRUE), Extended(), Save());
     
     MakePlots(recomom, chMom, fitFun, tag, recocuts);
-
-    std::cout << "signal content " << Sig.getNorm() << std::endl;
-    std::cout << "dio content " << DIO.getNorm() << std::endl;
-
     return fitRes;
 }

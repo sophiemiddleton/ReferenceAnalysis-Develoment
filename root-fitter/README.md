@@ -12,7 +12,8 @@ make all
 Then:
 
 ```
-./Mu2eAna filename histname
+./Mu2eAna "filename" "pass0a" true
+
 ```
 
 

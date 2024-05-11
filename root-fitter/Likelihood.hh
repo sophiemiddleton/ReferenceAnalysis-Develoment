@@ -43,7 +43,7 @@
 //My stuff
 #include "RooPol58.hh"
 //#include "RooCeMLL.hh"
-
+#include<tuple>
 using namespace std;
 using namespace TMath;
 using namespace RooFit;
@@ -58,6 +58,8 @@ class Likelihood  {
     Likelihood& operator=(const Likelihood &);
     virtual ~Likelihood() = default;
     TString GetLabel(TString run);
+    std::tuple <RooRealVar, RooRealVar, RooRealVar, RooRealVar>  CE_parameters();
+    std::tuple <RooRealVar, RooRealVar, RooRealVar, RooRealVar>  DIO_parameters();
     void MakePlots(RooRealVar recomom, RooDataHist chMom, RooAddPdf fitFun, TString tag, TString recocuts);
     RooFitResult *CalculateLikelihood(TH1F *hist_mom1, TString runname, bool usecuts);
     #endif
