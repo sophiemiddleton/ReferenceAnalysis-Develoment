@@ -6,7 +6,7 @@
 #include <TFile.h>
 #include <TTree.h>
 
-//#include "Likelihood.hh"
+#include "Likelihood.hh"
 
 using namespace std;
 

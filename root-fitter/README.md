@@ -5,6 +5,7 @@ Code written by Sophie Middleton (Caltech). This code is meant for the analysis 
 To build:
 
 ```
+make clean
 make all
 ```
 
@@ -23,4 +24,6 @@ make clean
 
 # Classes:
 
-* TODO
+* Likelihood - will build up the likelihood
+* Nusiance - will build up nusiance parameters and pass to Likelihood
+* RooPol58 - DIO momentum custom PDF

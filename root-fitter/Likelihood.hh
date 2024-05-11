@@ -1,11 +1,52 @@
 #ifndef _Likelihood_HH
 #define _Likelihood_HH
 
-// ROOT:
-#include <TObjString.h>
-#include <TROOT.h>
-#include <TSystem.h>
-#include <TMath.h>
+
+#include <fstream>
+#include <iostream>
+#include "TSystem.h"
+#include "TROOT.h"
+#include "TStyle.h"
+#include "TFile.h"
+#include "TH1.h"
+
+#include "TF1.h"
+#include "TMath.h"
+#include "TTree.h"
+#include "TCanvas.h"
+#include "TPad.h"
+#include "TMath.h"
+#include <Riostream.h>
+
+#include "TPaveStats.h"
+#include "TPaveText.h"
+#include "TLatex.h"
+#include "TLegend.h"
+#include "TPaveLabel.h"
+#include "TAttFill.h"
+// add roofit header files
+#include "RooHist.h"
+#include "RooRealVar.h"
+#include "RooPlot.h"
+#include "RooDataSet.h"
+#include "RooDataHist.h"
+#include "RooKeysPdf.h"
+#include "RooHistPdf.h"
+#include "RooGaussian.h"
+#include "RooAddPdf.h"
+#include "RooArgList.h"
+#include "RooCBShape.h"
+#include "RooGenericPdf.h"
+#include "RooFFTConvPdf.h"
+#include "RooFitResult.h"
+
+//My stuff
+#include "RooPol58.hh"
+//#include "RooCeMLL.hh"
+
+using namespace std;
+using namespace TMath;
+using namespace RooFit;
 
 using namespace std;
 
@@ -16,7 +57,7 @@ class Likelihood  {
     Likelihood(const Likelihood &);
     Likelihood& operator=(const Likelihood &);
     virtual ~Likelihood() = default;
-    double CalculateLikelihood(double u);
+    void CalculateLikelihood();//TString filename, bool usecuts);
     #endif
     ClassDef (Likelihood,0);
 

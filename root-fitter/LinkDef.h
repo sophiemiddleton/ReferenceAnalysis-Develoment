@@ -5,4 +5,5 @@
 #pragma link C++ nestedclasses;
 
 #pragma link C++ class Likelihood+;
+#pragma link C++ class RooPol58+;
 #endif
