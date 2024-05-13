@@ -24,7 +24,7 @@ TTree *ImportNTuple(TString filename){
 }
 
 TH1F *GetRecoHist(TTree* trkana, bool usecuts){
-  TH1F* hist_mom1 = new TH1F("hist_mom1", "", 100, 95,105);
+  TH1F* hist_mom1 = new TH1F("hist_mom1", "", 100, 95,106);
   TString recocuts = "";
   if(usecuts){
     recocuts = "demfit.sid==0 && demlh.t0 > 700 && demlh.t0err < 0.9 && demtrkqual.result > 0.2 && dem.nactive > 20 && demlh.maxr < 680";
@@ -46,7 +46,7 @@ TH1F* make_CRV_cuts(TTree *trkana, bool usecuts){
     std::vector<std::vector<mu2e::LoopHelixInfo>>* lhs;
     trkana->SetBranchAddress("demlh", &lhs);
     
-    TH1F* hist_mom1 = new TH1F("hist_mom1","",100, 95, 105);
+    TH1F* hist_mom1 = new TH1F("hist_mom1","",100, 95, 110);
     
     unsigned int n_events = trkana->GetEntries();
     for (unsigned int i_event = 0; i_event < n_events; ++i_event) {

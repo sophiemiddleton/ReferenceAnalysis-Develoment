@@ -39,7 +39,7 @@
 #include "RooGenericPdf.h"
 #include "RooFFTConvPdf.h"
 #include "RooFitResult.h"
-
+#include "RooUniform.h"
 //My stuff
 #include "ReferenceAna/inc/RooPol58.hh"
 

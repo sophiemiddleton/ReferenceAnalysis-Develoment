@@ -49,7 +49,7 @@ void Likelihood::MakePlots(RooRealVar recomom, RooDataHist chMom, RooAddPdf fitF
     th3->SetTextSize(0.03);
 
     chFrame -> SetYTitle("Events per 25 keV");
-    chFrame -> SetYTitle("Reconstructed Mom at TrkEnt [MeV/c]");
+    chFrame -> SetXTitle("Reconstructed Mom at TrkEnt [MeV/c]");
     can -> Draw();
     chFrame -> Draw("same");
     th1->Draw("same");
@@ -89,7 +89,7 @@ RooFitResult *Likelihood::CalculateBinnedLikelihood(TH1F *hist_mom1, TString run
     TString tag = GetLabel(runname);
     
     // make RooFit objects
-    RooRealVar recomom("recomom", "reco mom [MeV/c]", 95, 105); //TODO - should make these input parameters
+    RooRealVar recomom("recomom", "reco mom [MeV/c]", 95, 106);
     RooDataHist chMom("chMom", "chMom", recomom, hist_mom1);
 
     // CE signal shape:
@@ -102,9 +102,13 @@ RooFitResult *Likelihood::CalculateBinnedLikelihood(TH1F *hist_mom1, TString run
     RooRealVar ndio("ndio", "number in dio region", 0.0, 0.0, 100000);
     RooPol58 DIO("DIO", "dio tail", recomom, get<0>(DIOparams), get<1>(DIOparams),get<2>(DIOparams),get<3>(DIOparams));
     
+    // Cosmic shape:
+    RooUniform Cosmic("Cosmic", "cosmic", recomom);
+    RooRealVar ncosmics("ncosmics", "fraction of cosmics", 0.0, 0.0, 10);
+    
     //combined binned ML (extended)
-    RooAddPdf fitFun("fitFun", "Sig + DIO", RooArgList(Sig,DIO), RooArgList(nsig, ndio));
-    RooFitResult *fitRes = fitFun.chi2FitTo(chMom, Range(95, 105), Strategy(3), PrintLevel(1), Hesse(kTRUE), Extended(), Save());
+    RooAddPdf fitFun("fitFun", "Sig + DIO + Cosmic", RooArgList(Sig, DIO, Cosmic), RooArgList(nsig, ndio, ncosmics)); 
+    RooFitResult *fitRes = fitFun.fitTo(chMom, Range(95, 106), Strategy(3), PrintLevel(1), Hesse(kTRUE), Extended(), Save());
     
     MakePlots(recomom, chMom, fitFun, tag, recocuts);
     return fitRes;
