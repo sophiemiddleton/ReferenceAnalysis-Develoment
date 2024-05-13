@@ -27,6 +27,17 @@ class ImportRecoData :
         branches = trkana.arrays(filter_name=["/"+str(leafname)+"/", "/"+str(leafname_field)+"/"])
         return branches
 
+    def Count(self, branches, low, hi, time):
+        """ count events in described window """
+        branches['demfit_mom'] = np.sqrt((branches['demfit']['mom']['fCoordinates']['fX'])**2 + (branches['demfit']['mom']['fCoordinates']['fY'])**2 + (branches['demfit']['mom']['fCoordinates']['fZ'])**2)
+        
+        # find entrance
+        trk_mask = (branches['demlh']['t0']>=float(time) )
+        #### TODO - count events in given signal region ####
+        return len(trk_mask)
+        
+        
+
     def PlotRecoMom(self, branches, low, hi, time):
         """ make basic reco mom plot, no position requirement """
         branches['demfit_mom'] = np.sqrt((branches['demfit']['mom']['fCoordinates']['fX'])**2 + (branches['demfit']['mom']['fCoordinates']['fY'])**2 + (branches['demfit']['mom']['fCoordinates']['fZ'])**2)

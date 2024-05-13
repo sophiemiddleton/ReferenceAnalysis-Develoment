@@ -37,6 +37,9 @@ def Run():
     # make a histogram of this:
     recodata.PlotRecoMom(branches, options.mom_low, options.mom_hi, options.time_low)
     recodata.PlotRecoMomEnt(branches, options.mom_low, options.mom_hi, options.time_low)
+    # count number of events in the chosen window
+    count_time = recodata.Count(branches, options.mom_low, options.mom_hi, options.time_low)
+    print(count_time)
     
 if __name__ == "__main__":
 

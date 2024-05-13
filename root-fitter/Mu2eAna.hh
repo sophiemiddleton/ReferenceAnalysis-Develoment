@@ -18,6 +18,7 @@ class Mu2eAna  {
     int main(int argc, char* argv[]);
     TTree *ImportNTuple(TString filename);
     TH1F *GetRecoHist(TTree* trkana, bool usecuts);
+    TH1F* make_CRV_cuts(TTree *trkana);
     void RunFit(TString File, TString Run, bool cuts);
     #endif
     ClassDef(Mu2eAna, 0);
