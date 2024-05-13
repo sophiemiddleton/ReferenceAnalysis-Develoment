@@ -4,7 +4,7 @@ Driving function for analysis
 
 #include <fstream>
 #include<iostream>
-#include "ReferenceAna/inc/Mu2eAna.hh"
+//#include "ReferenceAna/inc/Mu2eAna.hh"
 #include "ReferenceAna/inc/Likelihood.hh"
 
 #include "TrkAna/inc/CrvHitInfoReco.hh"
@@ -46,18 +46,17 @@ TH1F* make_CRV_cuts(TTree *trkana, bool usecuts){
     std::vector<std::vector<mu2e::LoopHelixInfo>>* lhs;
     trkana->SetBranchAddress("demlh", &lhs);
     
-    TH1F* hist_mom1 = new TH1F("hist_mom1","",100, 95, 110);
+    TH1F* hist_mom1 = new TH1F("hist_mom1","",100, 95, 105);
     
     unsigned int n_events = trkana->GetEntries();
     for (unsigned int i_event = 0; i_event < n_events; ++i_event) {
       trkana->GetEntry(i_event);
       bool passes_lhcuts = false;
-      if(usecuts and trkquals->result > 0.2){
       for (auto& lh : *lhs) { 
         if(lh.size() > 0){ 
-          if(usecuts and lh[0].t0> 700 and lh[0].t0err < 0.9 and lh[0].maxr<680){
+          if(usecuts and trkquals->result > 0.2 and lh[0].t0> 700 and lh[0].t0err < 0.9 and lh[0].maxr<680){
             passes_lhcuts = true;
-          }
+          } if(!usecuts) passes_lhcuts = true;
         }
       }
       for (auto& track : *tracks) {
@@ -73,13 +72,13 @@ TH1F* make_CRV_cuts(TTree *trkana, bool usecuts){
             }
             if (!crvhit and passes_lhcuts) {
               hist_mom1->Fill(fit.mom.R());
+              
             }
           }
         }
       }
     }
-  }
-  return hist_mom1;
+    return hist_mom1;
 }
 
 
@@ -87,7 +86,7 @@ TH1F* make_CRV_cuts(TTree *trkana, bool usecuts){
 void RunFit(TH1F* histmom, TString Run, bool cuts){
   std::cout<<" calling root-fitter ...  "<<std::endl;
   Likelihood *lh = new Likelihood();
-  RooFitResult *result = lh->CalculateLikelihood(histmom, Run, cuts);
+  RooFitResult *result = lh->CalculateBinnedLikelihood(histmom, Run, cuts);
   std::cout<<" Mu2e Ana Result "<< result << std::endl;
 }
 

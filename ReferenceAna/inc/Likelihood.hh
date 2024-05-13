@@ -59,7 +59,7 @@ namespace rootfitter{
         std::tuple <RooRealVar, RooRealVar, RooRealVar, RooRealVar>  CE_parameters();
         std::tuple <RooRealVar, RooRealVar, RooRealVar, RooRealVar>  DIO_parameters();
         void MakePlots(RooRealVar recomom, RooDataHist chMom, RooAddPdf fitFun, TString tag, TString recocuts);
-        RooFitResult *CalculateLikelihood(TH1F *hist_mom1, TString runname, bool usecuts);
+        RooFitResult *CalculateBinnedLikelihood(TH1F *hist_mom1, TString runname, bool usecuts);
         #endif
         ClassDef (Likelihood,1);
 

@@ -1,5 +1,4 @@
 <lcgdict>
    <class name="rootfitter::RooPol58" />
   <class name="rootfitter::Likelihood" />
-  <class name="rootfitter::Mu2eAna" />
 </lcgdict>

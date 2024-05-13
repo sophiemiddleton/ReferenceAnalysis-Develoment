@@ -81,7 +81,7 @@ std::tuple <RooRealVar, RooRealVar, RooRealVar, RooRealVar>  Likelihood::DIO_par
     
 }
 
-RooFitResult *Likelihood::CalculateLikelihood(TH1F *hist_mom1, TString runname, bool usecuts)
+RooFitResult *Likelihood::CalculateBinnedLikelihood(TH1F *hist_mom1, TString runname, bool usecuts)
 {
     TString recocuts = "";
     if(usecuts) recocuts = "Cuts Applied";
