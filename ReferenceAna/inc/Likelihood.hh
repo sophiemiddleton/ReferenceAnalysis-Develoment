@@ -40,6 +40,8 @@
 #include "RooFFTConvPdf.h"
 #include "RooFitResult.h"
 #include "RooUniform.h"
+#include "RooMinimizer.h"
+#include "RooAbsReal.h"
 //My stuff
 #include "ReferenceAna/inc/RooPol58.hh"
 
@@ -60,6 +62,8 @@ namespace rootfitter{
         std::tuple <RooRealVar, RooRealVar, RooRealVar, RooRealVar>  DIO_parameters();
         void MakePlots(RooRealVar recomom, RooDataHist chMom, RooAddPdf fitFun, TString tag, TString recocuts);
         RooFitResult *CalculateBinnedLikelihood(TH1F *hist_mom1, TString runname, bool usecuts);
+        void MakeProfileLikelihood(RooAddPdf fitFun,RooDataHist chMom, RooRealVar nsig, RooRealVar recomom);
+        void CalculateUnbinnedLikelihood(TTree *mom, TString runname, bool usecuts);
         #endif
         ClassDef (Likelihood,1);
 

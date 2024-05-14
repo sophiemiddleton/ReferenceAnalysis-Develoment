@@ -23,6 +23,7 @@ void Likelihood::MakePlots(RooRealVar recomom, RooDataHist chMom, RooAddPdf fitF
     TCanvas *can = new TCanvas("can", "", 100, 100, 600, 600);
 
     RooPlot *chFrame = recomom.frame(Title(""));
+
     chMom.plotOn(chFrame, MarkerColor(kBlack), LineColor(kBlack), MarkerSize(0.5), Name("chMom"));
 
     //Sig.plotOn(chFrame, LineColor(kRed), LineStyle(1), Name("sig"));
@@ -58,6 +59,8 @@ void Likelihood::MakePlots(RooRealVar recomom, RooDataHist chMom, RooAddPdf fitF
     can -> SetLogy();
     can -> Update();
     can -> SaveAs("CombinedFitResult.root");
+
+    
 }
 
 std::tuple <RooRealVar, RooRealVar, RooRealVar, RooRealVar>  Likelihood::CE_parameters(){
@@ -90,7 +93,7 @@ RooFitResult *Likelihood::CalculateBinnedLikelihood(TH1F *hist_mom1, TString run
     
     // make RooFit objects
     RooRealVar recomom("recomom", "reco mom [MeV/c]", 95, 106);
-    RooDataHist chMom("chMom", "chMom", recomom, hist_mom1);
+    RooDataHist chMom("chMom", "chMom", recomom, hist_mom1); //TODO unbinned use RooDataSet
 
     // CE signal shape:
     std::tuple <RooRealVar, RooRealVar, RooRealVar, RooRealVar> CEparams = CE_parameters();
@@ -110,6 +113,46 @@ RooFitResult *Likelihood::CalculateBinnedLikelihood(TH1F *hist_mom1, TString run
     RooAddPdf fitFun("fitFun", "Sig + DIO + Cosmic", RooArgList(Sig, DIO, Cosmic), RooArgList(nsig, ndio, ncosmics)); 
     RooFitResult *fitRes = fitFun.fitTo(chMom, Range(95, 106), Strategy(3), PrintLevel(1), Hesse(kTRUE), Extended(), Save());
     
+    // run profile
+    MakeProfileLikelihood(fitFun, chMom, nsig, recomom);
+    
+    //make fit plots
     MakePlots(recomom, chMom, fitFun, tag, recocuts);
     return fitRes;
+}
+
+void Likelihood::MakeProfileLikelihood(RooAddPdf fitFun, RooDataHist chMom, RooRealVar nsig, RooRealVar recomom)
+{
+    TCanvas *can2 = new TCanvas("can2","");
+    RooPlot *chFrame2 = nsig.frame(RooFit::Bins(60), RooFit::Range(-1,50));
+    RooAbsReal* nll = fitFun.createNLL(chMom);
+    RooMinimizer m(*nll);
+    m.minos();
+    RooAbsReal *pll = nll->createProfile(nsig);
+    pll->plotOn(chFrame2, RooFit::ShiftToZero(), LineColor(kGreen), LineStyle(1), Name("pll"));
+    nll->plotOn(chFrame2, RooFit::ShiftToZero(), LineColor(kRed), LineStyle(1), Name("nll"));
+    chFrame2->SetMinimum(-1);
+    chFrame2->SetMaximum(5);
+    chFrame2->Draw();
+    can2 -> Update();
+    can2 -> SaveAs("nllandpll.root");
+}
+
+void Likelihood::CalculateUnbinnedLikelihood(TTree *mom, TString runname, bool usecuts)
+{
+    /*TString recocuts = "";
+    if(usecuts) recocuts = "Cuts Applied";
+    else recocuts = "No Cuts";
+    TString tag = GetLabel(runname);
+    
+    // make RooFit objects
+    RooRealVar recomom("recomom", "reco mom [MeV/c]", 95, 106);
+    RooDataHist chMom("chMom", "chMom", recomom, hist_mom1); //TODO unbinned use RooDataSet*/
+    /*
+    RooDataSet mydata(...);
+ 
+    TFile outputFile("filename.root", "RECREATE");
+    mydata.convertToTreeStore();
+
+    */
 }
