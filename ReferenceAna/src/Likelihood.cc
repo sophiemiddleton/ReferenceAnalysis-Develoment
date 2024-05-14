@@ -84,7 +84,7 @@ std::tuple <RooRealVar, RooRealVar, RooRealVar, RooRealVar>  Likelihood::DIO_par
     
 }
 
-RooFitResult *Likelihood::CalculateBinnedLikelihood(TH1F *hist_mom1, TString runname, bool usecuts)
+RooFitResult *Likelihood::CalculateBinnedLikelihood(TH1F *hist_mom1, TString runname, bool usecuts, double mom_lo, double mom_hi)
 {
     TString recocuts = "";
     if(usecuts) recocuts = "Cuts Applied";
@@ -92,7 +92,7 @@ RooFitResult *Likelihood::CalculateBinnedLikelihood(TH1F *hist_mom1, TString run
     TString tag = GetLabel(runname);
     
     // make RooFit objects
-    RooRealVar recomom("recomom", "reco mom [MeV/c]", 95, 106);
+    RooRealVar recomom("recomom", "reco mom [MeV/c]", mom_lo, mom_hi);
     RooDataHist chMom("chMom", "chMom", recomom, hist_mom1); //TODO unbinned use RooDataSet
 
     // CE signal shape:
@@ -111,7 +111,7 @@ RooFitResult *Likelihood::CalculateBinnedLikelihood(TH1F *hist_mom1, TString run
     
     //combined binned ML (extended)
     RooAddPdf fitFun("fitFun", "Sig + DIO + Cosmic", RooArgList(Sig, DIO, Cosmic), RooArgList(nsig, ndio, ncosmics)); 
-    RooFitResult *fitRes = fitFun.fitTo(chMom, Range(95, 106), Strategy(3), PrintLevel(1), Hesse(kTRUE), Extended(), Save());
+    RooFitResult *fitRes = fitFun.fitTo(chMom, Range(mom_lo, mom_hi), Strategy(3), PrintLevel(1), Hesse(kTRUE), Extended(), Save());
     
     // run profile
     MakeProfileLikelihood(fitFun, chMom, nsig, recomom);

@@ -23,8 +23,8 @@ TTree *ImportNTuple(TString filename){
   return trkana;
 }
 
-TH1F *GetRecoHist(TTree* trkana, bool usecuts){
-  TH1F* hist_mom1 = new TH1F("hist_mom1", "", 100, 95,106);
+TH1F *GetRecoHist(TTree* trkana, bool usecuts, double mom_lo, double mom_hi){
+  TH1F* hist_mom1 = new TH1F("hist_mom1", "", 100, mom_lo,mom_hi);
   TString recocuts = "";
   if(usecuts){
     recocuts = "demfit.sid==0 && demlh.t0 > 700 && demlh.t0err < 0.9 && demtrkqual.result > 0.2 && dem.nactive > 20 && demlh.maxr < 680";
@@ -83,11 +83,11 @@ TH1F* make_CRV_cuts(TTree *trkana, bool usecuts){
 
 
 
-void RunFit(TH1F* histmom, TString Run, bool cuts){
-  std::cout<<" calling root-fitter ...  "<<std::endl;
+void RunFit(TH1F* histmom, TString Run, bool cuts, double mom_lo, double mom_hi){
+  std::cout<<" ------  calling root-fitter ...  "<<std::endl;
   Likelihood *lh = new Likelihood();
-  RooFitResult *result = lh->CalculateBinnedLikelihood(histmom, Run, cuts);
-  std::cout<<" Mu2e Ana Result "<< result << std::endl;
+  RooFitResult *result = lh->CalculateBinnedLikelihood(histmom, Run, cuts, mom_lo, mom_hi);
+  std::cout<<" >>>>> Mu2e Ana Result (TODO) "<< result << std::endl;
 }
 
 int main(int argc, char* argv[]){
@@ -97,15 +97,17 @@ int main(int argc, char* argv[]){
   TString filename = argv[1]; // TrkAna NTuple
   TString runname = argv[2]; // e.g. pass0a
   bool usecuts = argv[3]; //true or false
+  double mom_lo = 95; 
+  double mom_hi = 106;
   
   TTree *trkana = ImportNTuple(filename);
   if(runname == "pass0a") {
-    TH1F *histmom = GetRecoHist(trkana, usecuts);
-    RunFit(histmom, runname, usecuts);
+    TH1F *histmom = GetRecoHist(trkana, usecuts, mom_lo, mom_hi);
+    RunFit(histmom, runname, usecuts, mom_lo, mom_hi);
   }
   if(runname == "pass0b") {
     TH1F *histmom = make_CRV_cuts(trkana, usecuts);
-    RunFit(histmom, runname, usecuts);
+    RunFit(histmom, runname, usecuts, mom_lo, mom_hi);
   }
   return 0;
 }
