@@ -441,7 +441,7 @@ class StatsFunctions :
     """
     def GetFeldmanCousinsSensitivity(self, background_mean):
         size = len(self.FeldmanCousins_sensitivityValues)
-        if (background_mean < 10): # have only values up to 10 background events in table, will not work for wide DIO spectrum
+        if (background_mean < 10): # FIXME have only values up to 10 background events in table, will not work for wide DIO spectrum
                 print("DIO FC for n = ", background_mean)
                 nb        = 2001
                 bInterval = 0.005

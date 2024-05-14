@@ -10,16 +10,13 @@ from ROOT import TMath, TH1F, TF1, TCanvas
 from Histograms import Histograms
 from Results import Results
 from DIO import DIO
-from RPC import RPC
-from CE import CE
 from StatsFunctions import *
 from Constants import *
 
 class YieldFunctions:
 
-        def __init__(self,histos, nbins, mom_low, mom_high, rpc_filename_int, rpc_filename_ext, constants, showRPC=True):
+        def __init__(self,histos, nbins, mom_low, mom_high,constants):
             self.optimize_for = 'BFUL'
-            self.showRPC = showRPC
             self.momentum_lower_limit = mom_low
             self.momentum_upper_limit = mom_high
             self.nBins = nbins

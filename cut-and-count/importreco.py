@@ -19,12 +19,13 @@ class ImportRecoData :
         self.branchName = branchName
         self.cuts = Cuts()
 
-    def Import_RecoFits(self, leafname, leafname_field):
-        """ import reconstructed trk ana"""
-        # import with uproot
-        trkana = uproot.open(self.fileName+":"+str(self.treeName)+"/"+str(self.branchName))
-        # find track fit branches for downstream (d) electron (em) loop helix (lh):
-        branches = trkana.arrays(filter_name=["/"+str(leafname)+"/", "/"+str(leafname_field)+"/"])
+    def Import_branches(self, leafnames):
+        """ import list of branches from trk ana"""
+        trkana = uproot.open(self.FileName+":"+str(self.TreeName)+"/"+str(self.BranchName))
+        list_names = []
+        for i, leafname  in enumerate(leafnames):
+            list_names.append("/"+str(leafname)+"/")
+        branches = trkana.arrays(filter_name=list_names)
         return branches
 
     def Count(self, branches, low, hi, time):

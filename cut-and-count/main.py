@@ -33,7 +33,7 @@ def Run():
     # Import the data into panadas dataframes:
     recodata = ImportRecoData(options.filelist, options.treename, options.branchname)
     # extract reco mom for Loop Helix:
-    branches = recodata.Import_RecoFits("demfit", "demlh")
+    branches = recodata.Import_branches("demfit", "demlh")
     # make a histogram of this:
     recodata.PlotRecoMom(branches, options.mom_low, options.mom_hi, options.time_low)
     recodata.PlotRecoMomEnt(branches, options.mom_low, options.mom_hi, options.time_low)
