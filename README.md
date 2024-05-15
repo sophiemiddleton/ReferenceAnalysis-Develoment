@@ -11,7 +11,7 @@ It provides a simple cross-check, and also a place to exercise our analysis tool
 Scripts associated with development of the Mu2e Reference Analysis
 
 * ReferenceAna - this runs roofit on standard ntuple (currently TrkAna) output on Mu2e machines;
-* StatsTool-CutNCount - this will priovide a simplistic cut-and-count analysis - currently a set of python scripts interfaced to pyROOT.
+* StatsTool-CutNCount - old scripts for previous sensitivity study.
 
 ## Development Status
 
@@ -27,6 +27,4 @@ There is room to contribute here: reach out to volunteer (smidd@caltech.edu)
 
 ### StatsTool-CutNCount
 
-this is currently under-development. These scripts are from the StatsTool 2021 package made for the Mu2e-II study. They need heavily updating.
-
-There is room to contribute here: reach out to volunteer (smidd@caltech.edu)
+this is currently under-development. These scripts are from the StatsTool 2021 package made for the Mu2e-II study. They are here as examples.

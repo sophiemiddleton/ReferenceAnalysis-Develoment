@@ -19,7 +19,7 @@ TString Likelihood::GetLabel(TString run){
   return pass;
 }
 
-void Likelihood::MakePlots(RooRealVar recomom, RooDataHist chMom, RooAddPdf fitFun, TString tag, TString recocuts){
+template <class T> void Likelihood::MakePlots(RooRealVar recomom, T chMom, RooAddPdf fitFun, TString tag, TString recocuts){
     TCanvas *can = new TCanvas("can", "", 100, 100, 600, 600);
 
     RooPlot *chFrame = recomom.frame(Title(""));
@@ -80,8 +80,6 @@ std::tuple <RooRealVar, RooRealVar, RooRealVar, RooRealVar>  Likelihood::DIO_par
     RooRealVar a8("a8", "a8", 9.16327e-20, 9.1e-20, 9.2e-20);
     std::tuple <RooRealVar, RooRealVar, RooRealVar, RooRealVar> par_tuple = make_tuple(a5,a6,a7,a8);
     return par_tuple;
-    
-    
 }
 
 RooFitResult *Likelihood::CalculateBinnedLikelihood(TH1F *hist_mom1, TString runname, bool usecuts, double mom_lo, double mom_hi)
@@ -121,15 +119,15 @@ RooFitResult *Likelihood::CalculateBinnedLikelihood(TH1F *hist_mom1, TString run
     return fitRes;
 }
 
-void Likelihood::MakeProfileLikelihood(RooAddPdf fitFun, RooDataHist chMom, RooRealVar nsig, RooRealVar recomom)
+template <class T> void Likelihood::MakeProfileLikelihood(RooAddPdf fitFun, T chMom, RooRealVar nsig, RooRealVar recomom)
 {
     TCanvas *can2 = new TCanvas("can2","");
     RooPlot *chFrame2 = nsig.frame(RooFit::Bins(60), RooFit::Range(-1,50));
     RooAbsReal* nll = fitFun.createNLL(chMom);
     RooMinimizer m(*nll);
     m.minos();
-    RooAbsReal *pll = nll->createProfile(nsig);
-    pll->plotOn(chFrame2, RooFit::ShiftToZero(), LineColor(kGreen), LineStyle(1), Name("pll"));
+    //RooAbsReal *pll = nll->createProfile(nsig);
+    //pll->plotOn(chFrame2, RooFit::ShiftToZero(), LineColor(kGreen), LineStyle(1), Name("pll"));
     nll->plotOn(chFrame2, RooFit::ShiftToZero(), LineColor(kRed), LineStyle(1), Name("nll"));
     chFrame2->SetMinimum(-1);
     chFrame2->SetMaximum(5);
@@ -138,21 +136,44 @@ void Likelihood::MakeProfileLikelihood(RooAddPdf fitFun, RooDataHist chMom, RooR
     can2 -> SaveAs("nllandpll.root");
 }
 
-void Likelihood::CalculateUnbinnedLikelihood(TTree *mom, TString runname, bool usecuts)
+double Likelihood::ReturnRmu(RooRealVar nsig, RooRealVar ndio){
+  double Rmue = 1.0;
+  return Rmue; //TODO
+}
+
+RooFitResult * Likelihood::CalculateUnbinnedLikelihood(TTree *mom, TString runname, bool usecuts, double mom_lo, double mom_hi)
 {
-    /*TString recocuts = "";
+    TString recocuts = "";
     if(usecuts) recocuts = "Cuts Applied";
     else recocuts = "No Cuts";
     TString tag = GetLabel(runname);
     
     // make RooFit objects
-    RooRealVar recomom("recomom", "reco mom [MeV/c]", 95, 106);
-    RooDataHist chMom("chMom", "chMom", recomom, hist_mom1); //TODO unbinned use RooDataSet*/
-    /*
-    RooDataSet mydata(...);
- 
-    TFile outputFile("filename.root", "RECREATE");
-    mydata.convertToTreeStore();
-
-    */
+    RooRealVar recomom("recomom", "reco mom [MeV/c]", mom_lo, mom_hi);
+    
+    // CE signal shape:
+    std::tuple <RooRealVar, RooRealVar, RooRealVar, RooRealVar> CEparams = CE_parameters();
+    RooCBShape Sig("Sig", "signal peak", recomom, get<0>(CEparams), get<1>(CEparams),get<2>(CEparams),get<3>(CEparams));
+    RooRealVar nsig("nsig", "number of signal events", 0.0, 0.0, 100);
+   
+    // DIO shape:
+    std::tuple <RooRealVar, RooRealVar, RooRealVar, RooRealVar> DIOparams = DIO_parameters();
+    RooRealVar ndio("ndio", "number in dio region", 0.0, 0.0, 100000);
+    RooPol58 DIO("DIO", "dio tail", recomom, get<0>(DIOparams), get<1>(DIOparams),get<2>(DIOparams),get<3>(DIOparams));
+    
+    // Cosmic shape:
+    RooUniform Cosmic("Cosmic", "cosmic", recomom);
+    RooRealVar ncosmics("ncosmics", "fraction of cosmics", 0.0, 0.0, 10);
+    
+    //combined binned ML (extended)
+    RooAddPdf fitFun("fitFun", "Sig + DIO + Cosmic", RooArgList(Sig, DIO, Cosmic), RooArgList(nsig, ndio, ncosmics));
+    RooDataSet chMom("chMom", "chMom",RooArgSet(recomom), Import(*mom));
+    RooFitResult *fitRes = fitFun.fitTo(chMom, Range(mom_lo, mom_hi), Strategy(3), PrintLevel(1), Hesse(kTRUE), Extended(), Save());
+    
+    // run profile
+    MakeProfileLikelihood(fitFun, chMom, nsig, recomom);
+    
+    //make fit plots
+    MakePlots(recomom, chMom, fitFun, tag, recocuts);
+    return fitRes;
 }

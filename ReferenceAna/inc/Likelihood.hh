@@ -60,10 +60,11 @@ namespace rootfitter{
         TString GetLabel(TString run);
         std::tuple <RooRealVar, RooRealVar, RooRealVar, RooRealVar>  CE_parameters();
         std::tuple <RooRealVar, RooRealVar, RooRealVar, RooRealVar>  DIO_parameters();
-        void MakePlots(RooRealVar recomom, RooDataHist chMom, RooAddPdf fitFun, TString tag, TString recocuts);
+        template <class T> void MakePlots(RooRealVar recomom, T chMom, RooAddPdf fitFun, TString tag, TString recocuts);
         RooFitResult *CalculateBinnedLikelihood(TH1F *hist_mom1, TString runname, bool usecuts, double mom_lo, double mom_hi);
-        void MakeProfileLikelihood(RooAddPdf fitFun,RooDataHist chMom, RooRealVar nsig, RooRealVar recomom);
-        void CalculateUnbinnedLikelihood(TTree *mom, TString runname, bool usecuts);
+        template <class T> void MakeProfileLikelihood(RooAddPdf fitFun, T chMom, RooRealVar nsig, RooRealVar recomom);
+        double ReturnRmu(RooRealVar nsig, RooRealVar ndio);
+        RooFitResult * CalculateUnbinnedLikelihood(TTree *mom, TString runname, bool usecuts, double mom_lo, double mom_hi);
         #endif
         ClassDef (Likelihood,1);
 
