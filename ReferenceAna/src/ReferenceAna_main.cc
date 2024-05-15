@@ -34,7 +34,7 @@ TH1F *GetRecoHist(TTree* trkana, bool usecuts, double mom_lo, double mom_hi){
   return hist_mom1;
 }
 
-TTree* make_CRV_cuts_tree(TTree *trkana, bool usecuts){
+TTree* make_CRV_cuts_tree(TTree *trkana, bool usecuts, double mom_low, double mom_hi){
     std::vector<std::vector<mu2e::TrkFitInfo> >* tracks = 0;
     trkana->SetBranchAddress("demfit", &tracks);
 
@@ -85,8 +85,8 @@ TTree* make_CRV_cuts_tree(TTree *trkana, bool usecuts){
               for (auto& sim : *sims) {
                 for (auto& s : sim){
                   double startCode = s.startCode;
-                  if(fit.mom.R() > 95 and startCode == 166 and !passDIO ) { nDIO+=1; passDIO=true;}
-                  if(fit.mom.R() > 103 and fit.mom.R() < 106 and startCode == 167 and !passCE) { nCE +=1;passCE=true;}
+                  if(fit.mom.R() > mom_low and startCode == 166 and !passDIO ) { nDIO+=1; passDIO=true;}
+                  if(fit.mom.R() > mom_low and fit.mom.R() < mom_hi and startCode == 167 and !passCE) { nCE +=1;passCE=true;}
                 }
               }
               recomom = (fit.mom.R());
@@ -96,13 +96,13 @@ TTree* make_CRV_cuts_tree(TTree *trkana, bool usecuts){
         }
       }
     }
-    std::cout<<"nCE "<<nCE<<" nDIO "<<nDIO<<std::endl;
+    std::cout<<"MC Truth Count = nCE "<<nCE<<" nDIO "<<nDIO<<std::endl;
     return tree_recomom;
 }
     
     
 
-TH1F* make_CRV_cuts(TTree *trkana, bool usecuts){
+TH1F* make_CRV_cuts(TTree *trkana, bool usecuts, double mom_low, double mom_hi){
     std::vector<std::vector<mu2e::TrkFitInfo> >* tracks = 0;
     trkana->SetBranchAddress("demfit", &tracks);
 
@@ -118,7 +118,7 @@ TH1F* make_CRV_cuts(TTree *trkana, bool usecuts){
     std::vector<std::vector<mu2e::SimInfo>>* sims;
     trkana->SetBranchAddress("demmcsim", &sims);
     
-    TH1F* hist_mom1 = new TH1F("hist_mom1","",100, 95, 110);
+    TH1F* hist_mom1 = new TH1F("hist_mom1","",100, mom_low, 110);
     int nCE = 0;
     int nDIO = 0;
     
@@ -150,8 +150,8 @@ TH1F* make_CRV_cuts(TTree *trkana, bool usecuts){
               for (auto& sim : *sims) {
                 for (auto& s : sim){
                   double startCode = s.startCode;
-                  if(fit.mom.R() > 95 and startCode == 166 and !passDIO ) { nDIO+=1; passDIO=true;}
-                  if(fit.mom.R() > 103 and fit.mom.R() < 106 and startCode == 167 and !passCE) { nCE +=1;passCE=true;}
+                  if(fit.mom.R() > mom_low and startCode == 166 and !passDIO ) { nDIO+=1; passDIO=true;}
+                  if(fit.mom.R() > mom_low and fit.mom.R() < mom_hi and startCode == 167 and !passCE) { nCE +=1;passCE=true;}
                 }
               }
               hist_mom1->Fill(fit.mom.R());
@@ -161,29 +161,27 @@ TH1F* make_CRV_cuts(TTree *trkana, bool usecuts){
         }
       }
     }
-    std::cout<<"nCE "<<nCE<<" nDIO "<<nDIO<<std::endl;
+    std::cout<<"MC Truth Count: nCE "<<nCE<<" nDIO "<<nDIO<<std::endl;
     return hist_mom1;
 }
 
-void GetMCProcCodes(){} //TODO
-
 void RunBinnedFit(TH1F* histmom, TString Run, bool cuts, double mom_lo, double mom_hi){
-  std::cout<<" ------  calling root-fitter ...  "<<std::endl;
+  std::cout<<" ------  calling root-fitter with binned fit -----  "<<std::endl;
   Likelihood *lh = new Likelihood();
   RooFitResult *result = lh->CalculateBinnedLikelihood(histmom, Run, cuts, mom_lo, mom_hi);
   std::cout<<" >>>>> Mu2e Ana Result (TODO) "<< result << std::endl;
 }
 
 void RunUnbinnedFit(TTree* mom, TString Run, bool cuts, double mom_lo, double mom_hi){
-  std::cout<<" ------  calling root-fitter ...  "<<std::endl;
+  std::cout<<" ------  calling root-fitter with unbinned fit ----- "<<std::endl;
   Likelihood *lh = new Likelihood();
   RooFitResult *result = lh->CalculateUnbinnedLikelihood(mom, Run, cuts, mom_lo, mom_hi);
   std::cout<<" >>>>> Mu2e Ana Result (TODO) "<< result << std::endl;
 }
 
 int main(int argc, char* argv[]){
-  std::cout<<"========== Welcome to Mu2eAna =========="<<std::endl;
-  std::cout<<"-------- Analyzing "<<argv[2]<<" ------------"<<std::endl;
+  std::cout<<"========== Welcome to Mu2e's Reference Ana =========="<<std::endl;
+  std::cout<<"----------------Analyzing "<<argv[2]<<" ------------"<<std::endl;
   //TODO make this more user friendly
   TString filename = argv[1]; // TrkAna NTuple
   TString runname = argv[2]; // e.g. pass0a
@@ -193,28 +191,15 @@ int main(int argc, char* argv[]){
   double mom_hi = 106;
   
   TTree *trkana = ImportNTuple(filename);
-  //TODO - there's really no need to separate these anymore...
-  if(runname == "pass0a") {
-    if(type == "binned"){
-      TH1F *histmom = GetRecoHist(trkana, usecuts, mom_lo, mom_hi);
-      RunBinnedFit(histmom, runname, usecuts, mom_lo, mom_hi);
-    } else if (type == "unbinned") {
-      TTree *mom = make_CRV_cuts_tree(trkana, usecuts);
-      RunUnbinnedFit(mom, runname, usecuts, mom_lo, mom_hi);
-    } else {
-      std::cout<<"incorrect fit type, please select binned or unbinned"<<std::endl;
-    }
-  }
-  if(runname == "pass0b") {
-    if(type == "binned"){
-      TH1F *histmom = make_CRV_cuts(trkana, usecuts);
-      RunBinnedFit(histmom, runname, usecuts, mom_lo, mom_hi);
-    } else if (type == "unbinned") {
-      TTree *mom = make_CRV_cuts_tree(trkana, usecuts);
-      RunUnbinnedFit(mom, runname, usecuts, mom_lo, mom_hi);
-    } else {
-      std::cout<<"incorrect fit type, please select binned or unbinned"<<std::endl;
-    }
+
+  if(type == "binned"){
+    TH1F *histmom = make_CRV_cuts(trkana, usecuts, mom_lo, mom_hi);
+    RunBinnedFit(histmom, runname, usecuts, mom_lo, mom_hi);
+  } else if (type == "unbinned") {
+    TTree *mom = make_CRV_cuts_tree(trkana, usecuts, mom_lo, mom_hi);
+    RunUnbinnedFit(mom, runname, usecuts, mom_lo, mom_hi);
+  } else {
+    std::cout<<"incorrect fit type, please select binned or unbinned"<<std::endl;
   }
   return 0;
 }
