@@ -193,6 +193,7 @@ int main(int argc, char* argv[]){
   double mom_hi = 106;
   
   TTree *trkana = ImportNTuple(filename);
+  //TODO - there's really no need to separate these anymore...
   if(runname == "pass0a") {
     if(type == "binned"){
       TH1F *histmom = GetRecoHist(trkana, usecuts, mom_lo, mom_hi);

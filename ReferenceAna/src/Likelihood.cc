@@ -26,12 +26,11 @@ template <class T> void Likelihood::MakePlots(RooRealVar recomom, T chMom, RooAd
 
     chMom.plotOn(chFrame, MarkerColor(kBlack), LineColor(kBlack), MarkerSize(0.5), Name("chMom"));
 
-    //Sig.plotOn(chFrame, LineColor(kRed), LineStyle(1), Name("sig"));
-    //DIO.plotOn(chFrame, LineColor(kBlue), LineStyle(1), Name("dio"));
     fitFun.plotOn(chFrame, LineColor(kGreen), LineStyle(1), Name("combFit"));
 
     float chiSq = chFrame->chiSquare(11);
     std::cout << "chi2: " << chiSq << "; Probability: " << Prob(chiSq, 151) << std::endl;
+    
     TPaveLabel *pchi2 = new TPaveLabel(0.5, 0.70, 0.35, 0.80, Form("#chi^{2}/ndf = %4.2f", chiSq), "brNDC");
     pchi2 -> SetFillStyle(0);
     pchi2 -> SetBorderSize(0);
@@ -63,6 +62,30 @@ template <class T> void Likelihood::MakePlots(RooRealVar recomom, T chMom, RooAd
     
 }
 
+
+template <class T> void Likelihood::MakeProfileLikelihood(RooAddPdf fitFun, T chMom, RooRealVar nsig, RooRealVar recomom)
+{
+    TCanvas *can2 = new TCanvas("can2","");
+    RooPlot *chFrame2 = nsig.frame(RooFit::Bins(60), RooFit::Range(-1,50));
+    RooAbsReal* nll = fitFun.createNLL(chMom);
+    RooMinimizer m(*nll);
+    m.minos();
+    //RooAbsReal *pll = nll->createProfile(nsig);
+    //pll->plotOn(chFrame2, RooFit::ShiftToZero(), LineColor(kGreen), LineStyle(1), Name("pll"));
+    nll->plotOn(chFrame2, RooFit::ShiftToZero(), LineColor(kRed), LineStyle(1), Name("nll"));
+    chFrame2->SetMinimum(-1);
+    chFrame2->SetMaximum(5);
+    chFrame2->Draw();
+    can2 -> Update();
+    can2 -> SaveAs("nllandpll.root");
+}
+
+
+double Likelihood::ReturnRmu(RooRealVar nsig, RooRealVar ndio){
+  double Rmue = 1.0;
+  return Rmue; //TODO
+}
+
 std::tuple <RooRealVar, RooRealVar, RooRealVar, RooRealVar>  Likelihood::CE_parameters(){
     // CE parameters (assume simple crystal ball for now)
     RooRealVar fMean("mean", "mean", 104, 103, 105);
@@ -81,6 +104,15 @@ std::tuple <RooRealVar, RooRealVar, RooRealVar, RooRealVar>  Likelihood::DIO_par
     std::tuple <RooRealVar, RooRealVar, RooRealVar, RooRealVar> par_tuple = make_tuple(a5,a6,a7,a8);
     return par_tuple;
 }
+
+std::tuple <RooRealVar, RooRealVar>  Likelihood::RPC_parameters(){
+    // RPC shape is gaussian centered at 100 MeV/c (see SU2020)
+    RooRealVar meanrpc("meanrpc", "mean rpc", 100, 98, 102);
+    RooRealVar sigmarpc("sigmarpc", "width rpc", 2, 0, 5);
+    std::tuple <RooRealVar, RooRealVar> par_tuple = make_tuple(meanrpc, sigmarpc);
+    return par_tuple;
+}
+
 
 RooFitResult *Likelihood::CalculateBinnedLikelihood(TH1F *hist_mom1, TString runname, bool usecuts, double mom_lo, double mom_hi)
 {
@@ -105,10 +137,16 @@ RooFitResult *Likelihood::CalculateBinnedLikelihood(TH1F *hist_mom1, TString run
     
     // Cosmic shape:
     RooUniform Cosmic("Cosmic", "cosmic", recomom);
-    RooRealVar ncosmics("ncosmics", "fraction of cosmics", 0.0, 0.0, 10);
+    RooRealVar ncosmics("ncosmics", "number of cosmics", 0.0, 0.0, 10);
+    
+    // RPC shape:
+    std::tuple <RooRealVar, RooRealVar> RPCparams = RPC_parameters();
+    RooGaussian RPC("RPC", "RPC", recomom, get<0>(RPCparams), get<1>(RPCparams));
+    RooRealVar nrpc("nrpc", "number of rpc", 0.0, 0.0, 1.0);
+    
     
     //combined binned ML (extended)
-    RooAddPdf fitFun("fitFun", "Sig + DIO + Cosmic", RooArgList(Sig, DIO, Cosmic), RooArgList(nsig, ndio, ncosmics)); 
+    RooAddPdf fitFun("fitFun", "Sig + DIO + Cosmic + RPC", RooArgList(Sig, DIO, Cosmic, RPC), RooArgList(nsig, ndio, ncosmics, nrpc)); 
     RooFitResult *fitRes = fitFun.fitTo(chMom, Range(mom_lo, mom_hi), Strategy(3), PrintLevel(1), Hesse(kTRUE), Extended(), Save());
     
     // run profile
@@ -119,27 +157,7 @@ RooFitResult *Likelihood::CalculateBinnedLikelihood(TH1F *hist_mom1, TString run
     return fitRes;
 }
 
-template <class T> void Likelihood::MakeProfileLikelihood(RooAddPdf fitFun, T chMom, RooRealVar nsig, RooRealVar recomom)
-{
-    TCanvas *can2 = new TCanvas("can2","");
-    RooPlot *chFrame2 = nsig.frame(RooFit::Bins(60), RooFit::Range(-1,50));
-    RooAbsReal* nll = fitFun.createNLL(chMom);
-    RooMinimizer m(*nll);
-    m.minos();
-    //RooAbsReal *pll = nll->createProfile(nsig);
-    //pll->plotOn(chFrame2, RooFit::ShiftToZero(), LineColor(kGreen), LineStyle(1), Name("pll"));
-    nll->plotOn(chFrame2, RooFit::ShiftToZero(), LineColor(kRed), LineStyle(1), Name("nll"));
-    chFrame2->SetMinimum(-1);
-    chFrame2->SetMaximum(5);
-    chFrame2->Draw();
-    can2 -> Update();
-    can2 -> SaveAs("nllandpll.root");
-}
 
-double Likelihood::ReturnRmu(RooRealVar nsig, RooRealVar ndio){
-  double Rmue = 1.0;
-  return Rmue; //TODO
-}
 
 RooFitResult * Likelihood::CalculateUnbinnedLikelihood(TTree *mom, TString runname, bool usecuts, double mom_lo, double mom_hi)
 {
@@ -165,8 +183,14 @@ RooFitResult * Likelihood::CalculateUnbinnedLikelihood(TTree *mom, TString runna
     RooUniform Cosmic("Cosmic", "cosmic", recomom);
     RooRealVar ncosmics("ncosmics", "fraction of cosmics", 0.0, 0.0, 10);
     
-    //combined binned ML (extended)
-    RooAddPdf fitFun("fitFun", "Sig + DIO + Cosmic", RooArgList(Sig, DIO, Cosmic), RooArgList(nsig, ndio, ncosmics));
+    // RPC shape:
+    std::tuple <RooRealVar, RooRealVar> RPCparams = RPC_parameters();
+    RooGaussian RPC("RPC", "RPC", recomom, get<0>(RPCparams), get<1>(RPCparams));
+    RooRealVar nrpc("nrpc", "number of rpc", 0.0, 0.0, 1.0);
+    
+    //combined unbinned ML (extended)
+    RooAddPdf fitFun("fitFun", "Sig + DIO + Cosmic + RPC", RooArgList(Sig, DIO, Cosmic, RPC), RooArgList(nsig, ndio, ncosmics, nrpc)); 
+   
     RooDataSet chMom("chMom", "chMom",RooArgSet(recomom), Import(*mom));
     RooFitResult *fitRes = fitFun.fitTo(chMom, Range(mom_lo, mom_hi), Strategy(3), PrintLevel(1), Hesse(kTRUE), Extended(), Save());
     
