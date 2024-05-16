@@ -34,7 +34,7 @@ TH1F *GetRecoHist(TTree* trkana, bool usecuts, double mom_lo, double mom_hi){
   return hist_mom1;
 }
 
-TTree* make_CRV_cuts_tree(TTree *trkana, bool usecuts, double mom_low, double mom_hi){
+TTree* make_CRV_cuts_tree(TTree *trkana, bool usecuts, double mom_low, double mom_hi, std::tuple <double, double, double, double>& mcresults){
     std::vector<std::vector<mu2e::TrkFitInfo> >* tracks = 0;
     trkana->SetBranchAddress("demfit", &tracks);
 
@@ -54,9 +54,10 @@ TTree* make_CRV_cuts_tree(TTree *trkana, bool usecuts, double mom_low, double mo
     Float_t recomom;
     TTree *tree_recomom = new TTree("recomom","recomom");
     tree_recomom->Branch("recomom", &recomom, "recomom/F"); // reco mom
-    int nCE = 0;
-    int nDIO = 0;
-    
+    double nCE = 0;
+    double nDIO = 0;
+    double nCosmics = 0;
+    double nRPC = 0;
     unsigned int n_events = trkana->GetEntries();
     for (unsigned int i_event = 0; i_event < n_events; ++i_event) {
       bool passCE = false;
@@ -96,13 +97,14 @@ TTree* make_CRV_cuts_tree(TTree *trkana, bool usecuts, double mom_low, double mo
         }
       }
     }
+    mcresults = make_tuple(nCE,nDIO,nCosmics,nRPC);
     std::cout<<"MC Truth Count = nCE "<<nCE<<" nDIO "<<nDIO<<std::endl;
     return tree_recomom;
 }
     
-    
+void PlotMC(){} // TODO - plot the momentum of the true CE's - where are they?
 
-TH1F* make_CRV_cuts(TTree *trkana, bool usecuts, double mom_low, double mom_hi){
+TH1F* make_CRV_cuts(TTree *trkana, bool usecuts, double mom_low, double mom_hi, std::tuple <double, double, double, double>& mcresults){
     std::vector<std::vector<mu2e::TrkFitInfo> >* tracks = 0;
     trkana->SetBranchAddress("demfit", &tracks);
 
@@ -119,13 +121,16 @@ TH1F* make_CRV_cuts(TTree *trkana, bool usecuts, double mom_low, double mom_hi){
     trkana->SetBranchAddress("demmcsim", &sims);
     
     TH1F* hist_mom1 = new TH1F("hist_mom1","",100, mom_low, 110);
-    int nCE = 0;
-    int nDIO = 0;
+    double nCE = 0;
+    double nDIO = 0;
+    double nCosmics = 0;
+    double nRPC = 0;
     
     unsigned int n_events = trkana->GetEntries();
     for (unsigned int i_event = 0; i_event < n_events; ++i_event) {
       bool passCE = false;
       bool passDIO = false;
+      
       trkana->GetEntry(i_event);
       bool passes_lhcuts = false;
       for (auto& lh : *lhs) { 
@@ -142,7 +147,7 @@ TH1F* make_CRV_cuts(TTree *trkana, bool usecuts, double mom_low, double mom_hi){
             bool crvhit = false;
             for (auto& crvcoinc : *crvcoincs) {
               double crvcoinc_time = crvcoinc.time;
-              if (std::fabs(crvcoinc_time - track_time) < 150) {
+              if (std::fabs(crvcoinc_time - track_time) < 150) { //TODO optimize!!!!
                 crvhit = true;
               }
             }
@@ -161,28 +166,29 @@ TH1F* make_CRV_cuts(TTree *trkana, bool usecuts, double mom_low, double mom_hi){
         }
       }
     }
+    mcresults = make_tuple(nCE,nDIO,nCosmics,nRPC);
     std::cout<<"MC Truth Count: nCE "<<nCE<<" nDIO "<<nDIO<<std::endl;
     return hist_mom1;
 }
 
-void RunBinnedFit(TH1F* histmom, TString Run, bool cuts, double mom_lo, double mom_hi){
+void RunBinnedFit(TH1F* histmom, TString Run, bool cuts, double mom_lo, double mom_hi, std::tuple <double, double, double, double> &fitresult){
   std::cout<<" ------  calling root-fitter with binned fit -----  "<<std::endl;
   Likelihood *lh = new Likelihood();
-  RooFitResult *result = lh->CalculateBinnedLikelihood(histmom, Run, cuts, mom_lo, mom_hi);
-  std::cout<<" >>>>> Mu2e Ana Result (TODO) "<< result << std::endl;
+  RooFitResult *result = lh->CalculateBinnedLikelihood(histmom, Run, cuts, mom_lo, mom_hi, fitresult);
+  result->Print();
 }
 
-void RunUnbinnedFit(TTree* mom, TString Run, bool cuts, double mom_lo, double mom_hi){
+void RunUnbinnedFit(TTree* mom, TString Run, bool cuts, double mom_lo, double mom_hi, std::tuple <double, double, double, double> &fitresult){
   std::cout<<" ------  calling root-fitter with unbinned fit ----- "<<std::endl;
   Likelihood *lh = new Likelihood();
-  RooFitResult *result = lh->CalculateUnbinnedLikelihood(mom, Run, cuts, mom_lo, mom_hi);
-  std::cout<<" >>>>> Mu2e Ana Result (TODO) "<< result << std::endl;
+  RooFitResult *result = lh->CalculateUnbinnedLikelihood(mom, Run, cuts, mom_lo, mom_hi, fitresult);
+  result->Print();
 }
 
 int main(int argc, char* argv[]){
   std::cout<<"========== Welcome to Mu2e's Reference Ana =========="<<std::endl;
   std::cout<<"----------------Analyzing "<<argv[2]<<" ------------"<<std::endl;
-  //TODO make this more user friendly
+
   TString filename = argv[1]; // TrkAna NTuple
   TString runname = argv[2]; // e.g. pass0a
   bool usecuts = argv[3]; //true or false
@@ -190,16 +196,22 @@ int main(int argc, char* argv[]){
   double mom_lo = 95; 
   double mom_hi = 106;
   
+  std::tuple <double, double, double, double> mcresult;
+  std::tuple <double, double, double, double> fitresult;
+  
   TTree *trkana = ImportNTuple(filename);
 
   if(type == "binned"){
-    TH1F *histmom = make_CRV_cuts(trkana, usecuts, mom_lo, mom_hi);
-    RunBinnedFit(histmom, runname, usecuts, mom_lo, mom_hi);
+    TH1F *histmom = make_CRV_cuts(trkana, usecuts, mom_lo, mom_hi, mcresult);
+    RunBinnedFit(histmom, runname, usecuts, mom_lo, mom_hi, fitresult);
   } else if (type == "unbinned") {
-    TTree *mom = make_CRV_cuts_tree(trkana, usecuts, mom_lo, mom_hi);
-    RunUnbinnedFit(mom, runname, usecuts, mom_lo, mom_hi);
+    TTree *mom = make_CRV_cuts_tree(trkana, usecuts, mom_lo, mom_hi, mcresult);
+    RunUnbinnedFit(mom, runname, usecuts, mom_lo, mom_hi, fitresult);
   } else {
     std::cout<<"incorrect fit type, please select binned or unbinned"<<std::endl;
   }
+  
+  std::cout<<"Fit results NSig = "<<get<0>(fitresult)<<" NDIO = "<<get<1>(fitresult)<<" NCOSMIC = "<<get<2>(fitresult)<<" NRPC = "<<get<3>(fitresult)<<std::endl;
+  std::cout<<"MC results NSig "<<get<0>(mcresult)<<" NDIO = "<<get<1>(mcresult)<<" NCOSMIC = "<<get<2>(mcresult)<<" NRPC = "<<get<3>(mcresult)<<std::endl;
   return 0;
 }

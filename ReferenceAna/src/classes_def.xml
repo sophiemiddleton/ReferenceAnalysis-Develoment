@@ -1,4 +1,5 @@
 <lcgdict>
+  <class name="rootfitter::RooDSCB" />
    <class name="rootfitter::RooPol58" />
   <class name="rootfitter::Likelihood" />
 </lcgdict>

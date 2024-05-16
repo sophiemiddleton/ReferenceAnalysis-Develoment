@@ -1,10 +1,6 @@
 #include "ReferenceAna/inc/Likelihood.hh"
 using namespace rootfitter;
 
-/*Gaussian Likelihood::MakeGaussianNusiance(std::string name, double mean, double sigma) const{
-  Gaussian g(name, mean, sigma);
-  return g;
-}*/
 
 TString Likelihood::GetLabel(TString run){
   TString pass;
@@ -23,9 +19,7 @@ template <class T> void Likelihood::MakePlots(RooRealVar recomom, T chMom, RooAd
     TCanvas *can = new TCanvas("can", "", 100, 100, 600, 600);
 
     RooPlot *chFrame = recomom.frame(Title(""));
-
     chMom.plotOn(chFrame, MarkerColor(kBlack), LineColor(kBlack), MarkerSize(0.5), Name("chMom"));
-
     fitFun.plotOn(chFrame, LineColor(kGreen), LineStyle(1), Name("combFit"));
 
     float chiSq = chFrame->chiSquare(11);
@@ -63,13 +57,15 @@ template <class T> void Likelihood::MakePlots(RooRealVar recomom, T chMom, RooAd
 }
 
 
-template <class T> void Likelihood::MakeProfileLikelihood(RooAddPdf fitFun, T chMom, RooRealVar nsig, RooRealVar recomom)
+template <class T> RooFitResult *Likelihood::MakeLikelihood(RooAddPdf &fitFun, T chMom, RooRealVar nsig, RooRealVar recomom)
 {
     TCanvas *can2 = new TCanvas("can2","");
     RooPlot *chFrame2 = nsig.frame(RooFit::Bins(60), RooFit::Range(-1,50));
     RooAbsReal* nll = fitFun.createNLL(chMom);
     RooMinimizer m(*nll);
-    m.minos();
+    m.migrad();
+    m.hesse();
+    RooFitResult *fitRes = m.save();
     //RooAbsReal *pll = nll->createProfile(nsig);
     //pll->plotOn(chFrame2, RooFit::ShiftToZero(), LineColor(kGreen), LineStyle(1), Name("pll"));
     nll->plotOn(chFrame2, RooFit::ShiftToZero(), LineColor(kRed), LineStyle(1), Name("nll"));
@@ -77,13 +73,36 @@ template <class T> void Likelihood::MakeProfileLikelihood(RooAddPdf fitFun, T ch
     chFrame2->SetMaximum(5);
     chFrame2->Draw();
     can2 -> Update();
-    can2 -> SaveAs("nllandpll.root");
+    can2 -> SaveAs("nll.root");
+    return fitRes;
 }
 
+template <class T> RooFitResult *Likelihood::MakeProfileLikelihood(RooAddPdf &fitFun, T chMom, RooRealVar nsig, RooRealVar recomom)
+{
+    TCanvas *can2 = new TCanvas("can2","");
+    RooPlot *chFrame2 = nsig.frame(RooFit::Bins(60), RooFit::Range(-1,50));
+    RooAbsReal* nll = fitFun.createNLL(chMom);
+    RooMinimizer m(*nll);
+    m.migrad();
+    m.hesse();
+    RooFitResult *fitRes = m.save();
+    RooAbsReal *pll = nll->createProfile(nsig);
+    pll->plotOn(chFrame2, RooFit::ShiftToZero(), LineColor(kGreen), LineStyle(1), Name("pll"));
+    nll->plotOn(chFrame2, RooFit::ShiftToZero(), LineColor(kRed), LineStyle(1), Name("nll"));
+    chFrame2->SetMinimum(-1);
+    chFrame2->SetMaximum(5);
+    chFrame2->Draw();
+    can2 -> Update();
+    can2 -> SaveAs("nllandpll.root");
+    return fitRes;
+}
 
 double Likelihood::ReturnRmu(RooRealVar nsig, RooRealVar ndio){
-  double Rmue = 1.0;
-  return Rmue; //TODO
+  double muons_dios_full = ndio.getValV()/3.64e-11;
+  double number_of_stopped_muons = muons_dios_full/0.39;
+  double number_of_captures = number_of_stopped_muons*0.61; 
+  double Rmue = nsig.getValV()/number_of_captures;
+  return Rmue;
 }
 
 std::tuple <RooRealVar, RooRealVar, RooRealVar, RooRealVar>  Likelihood::CE_parameters(){
@@ -93,6 +112,17 @@ std::tuple <RooRealVar, RooRealVar, RooRealVar, RooRealVar>  Likelihood::CE_para
     RooRealVar fcbalpha("fcbalpha", "fcbalpha", 2.5, 0.05, 20.0);
     RooRealVar fcbndeg("fcbndeg", "fcbndeg", 10., 0.25, 80.);
     std::tuple <RooRealVar, RooRealVar, RooRealVar, RooRealVar> par_tuple = make_tuple(fMean,fWidth,fcbalpha,fcbndeg);
+    return par_tuple;
+}
+
+std::tuple <RooRealVar, RooRealVar, RooRealVar, RooRealVar,RooRealVar, RooRealVar>  Likelihood::CE_DSCB(){
+    RooRealVar fMean("mean", "mean", 104, 103, 105);
+    RooRealVar fWidth("sigma", "sigma", 2.67104e-01, 0.1, 1.0);
+    RooRealVar ANeg("ANeg", "ANeg", 4.2e-01, 3e-01, 5e-01);
+    RooRealVar PNeg("PNeg", "PNeg", 2.51002e+01, 20,30);
+    RooRealVar APos("APos", "APos", 2.22666e+00, 2,3);
+    RooRealVar PPos("PPos", "PPos", 5.95360,5,7);
+    std::tuple <RooRealVar, RooRealVar, RooRealVar, RooRealVar,RooRealVar, RooRealVar> par_tuple = make_tuple(fMean,fWidth,ANeg,PNeg,APos,PPos);
     return par_tuple;
 }
 
@@ -113,8 +143,8 @@ std::tuple <RooRealVar, RooRealVar>  Likelihood::RPC_parameters(){
     return par_tuple;
 }
 
-
-RooFitResult *Likelihood::CalculateBinnedLikelihood(TH1F *hist_mom1, TString runname, bool usecuts, double mom_lo, double mom_hi)
+//TODO - we should remove the option for a binned version, we want unbinned eventually.
+RooFitResult *Likelihood::CalculateBinnedLikelihood(TH1F *hist_mom1, TString runname, bool usecuts, double mom_lo, double mom_hi, std::tuple <double, double, double, double>& recoresult)
 {
     TString recocuts = "";
     if(usecuts) recocuts = "Cuts Applied";
@@ -126,8 +156,8 @@ RooFitResult *Likelihood::CalculateBinnedLikelihood(TH1F *hist_mom1, TString run
     RooDataHist chMom("chMom", "chMom", recomom, hist_mom1); //TODO unbinned use RooDataSet
 
     // CE signal shape:
-    std::tuple <RooRealVar, RooRealVar, RooRealVar, RooRealVar> CEparams = CE_parameters();
-    RooCBShape Sig("Sig", "signal peak", recomom, get<0>(CEparams), get<1>(CEparams),get<2>(CEparams),get<3>(CEparams));
+    std::tuple <RooRealVar, RooRealVar, RooRealVar, RooRealVar, RooRealVar, RooRealVar>  CEparams = CE_DSCB();
+    RooDSCB Sig("Sig", "signal peak", recomom, get<0>(CEparams),get<1>(CEparams),get<2>(CEparams),get<3>(CEparams),get<4>(CEparams),get<5>(CEparams));
     RooRealVar nsig("nsig", "number of signal events", 0.0, 0.0, 100);
    
     // DIO shape:
@@ -140,26 +170,29 @@ RooFitResult *Likelihood::CalculateBinnedLikelihood(TH1F *hist_mom1, TString run
     RooRealVar ncosmics("ncosmics", "number of cosmics", 0.0, 0.0, 10);
     
     // RPC shape:
-    std::tuple <RooRealVar, RooRealVar> RPCparams = RPC_parameters();
+    /*std::tuple <RooRealVar, RooRealVar> RPCparams = RPC_parameters();
     RooGaussian RPC("RPC", "RPC", recomom, get<0>(RPCparams), get<1>(RPCparams));
-    RooRealVar nrpc("nrpc", "number of rpc", 0.0, 0.0, 1.0);
+    RooRealVar nrpc("nrpc", "number of rpc", 0.0, 0.0, 1.0);*/
     
     
     //combined binned ML (extended)
-    RooAddPdf fitFun("fitFun", "Sig + DIO + Cosmic + RPC", RooArgList(Sig, DIO, Cosmic, RPC), RooArgList(nsig, ndio, ncosmics, nrpc)); 
-    RooFitResult *fitRes = fitFun.fitTo(chMom, Range(mom_lo, mom_hi), Strategy(3), PrintLevel(1), Hesse(kTRUE), Extended(), Save());
+    RooAddPdf fitFun("fitFun", "Sig + DIO + Cosmic ", RooArgList(Sig, DIO, Cosmic), RooArgList(nsig, ndio, ncosmics)); 
+   
+    // run profile
+    RooFitResult *fitRes = MakeLikelihood(fitFun, chMom, nsig, recomom);
     
     // run profile
-    MakeProfileLikelihood(fitFun, chMom, nsig, recomom);
-    
-    //make fit plots
     MakePlots(recomom, chMom, fitFun, tag, recocuts);
+    
+    //print results
+    recoresult = make_tuple(nsig.getValV(), ndio.getValV(), ncosmics.getValV(), 0);
+    std::cout<<" derived Rmue "<<ReturnRmu(nsig,ndio)<<std::endl;
     return fitRes;
 }
 
+//TODO the unbinned and binned fits are basically the same except hist<--> tree and DataHist <--> DataSet, we can probably tempalte these...
 
-
-RooFitResult * Likelihood::CalculateUnbinnedLikelihood(TTree *mom, TString runname, bool usecuts, double mom_lo, double mom_hi)
+RooFitResult *Likelihood::CalculateUnbinnedLikelihood(TTree *mom, TString runname, bool usecuts, double mom_lo, double mom_hi, std::tuple <double, double, double, double>& recoresult)
 {
     TString recocuts = "";
     if(usecuts) recocuts = "Cuts Applied";
@@ -170,8 +203,10 @@ RooFitResult * Likelihood::CalculateUnbinnedLikelihood(TTree *mom, TString runna
     RooRealVar recomom("recomom", "reco mom [MeV/c]", mom_lo, mom_hi);
     
     // CE signal shape:
-    std::tuple <RooRealVar, RooRealVar, RooRealVar, RooRealVar> CEparams = CE_parameters();
-    RooCBShape Sig("Sig", "signal peak", recomom, get<0>(CEparams), get<1>(CEparams),get<2>(CEparams),get<3>(CEparams));
+    //std::tuple <RooRealVar, RooRealVar, RooRealVar, RooRealVar> CEparams = CE_parameters();
+    //RooCBShape Sig("Sig", "signal peak", recomom, get<0>(CEparams), get<1>(CEparams),get<2>(CEparams),get<3>(CEparams));
+    std::tuple <RooRealVar, RooRealVar, RooRealVar, RooRealVar, RooRealVar, RooRealVar>  CEparams = CE_DSCB();
+    RooDSCB Sig("Sig", "signal peak", recomom, get<0>(CEparams),get<1>(CEparams),get<2>(CEparams),get<3>(CEparams),get<4>(CEparams),get<5>(CEparams));
     RooRealVar nsig("nsig", "number of signal events", 0.0, 0.0, 100);
    
     // DIO shape:
@@ -183,21 +218,23 @@ RooFitResult * Likelihood::CalculateUnbinnedLikelihood(TTree *mom, TString runna
     RooUniform Cosmic("Cosmic", "cosmic", recomom);
     RooRealVar ncosmics("ncosmics", "fraction of cosmics", 0.0, 0.0, 10);
     
-    // RPC shape:
-    std::tuple <RooRealVar, RooRealVar> RPCparams = RPC_parameters();
+    // RPC shape: TODO for when we have RPC
+    /*std::tuple <RooRealVar, RooRealVar> RPCparams = RPC_parameters();
     RooGaussian RPC("RPC", "RPC", recomom, get<0>(RPCparams), get<1>(RPCparams));
-    RooRealVar nrpc("nrpc", "number of rpc", 0.0, 0.0, 1.0);
+    RooRealVar nrpc("nrpc", "number of rpc", 0.0, 0.0, 1.0);*/
     
     //combined unbinned ML (extended)
-    RooAddPdf fitFun("fitFun", "Sig + DIO + Cosmic + RPC", RooArgList(Sig, DIO, Cosmic, RPC), RooArgList(nsig, ndio, ncosmics, nrpc)); 
-   
+    RooAddPdf fitFun("fitFun", "Sig + DIO + Cosmic ", RooArgList(Sig, DIO, Cosmic), RooArgList(nsig, ndio, ncosmics)); 
     RooDataSet chMom("chMom", "chMom",RooArgSet(recomom), Import(*mom));
-    RooFitResult *fitRes = fitFun.fitTo(chMom, Range(mom_lo, mom_hi), Strategy(3), PrintLevel(1), Hesse(kTRUE), Extended(), Save());
     
     // run profile
-    MakeProfileLikelihood(fitFun, chMom, nsig, recomom);
+    RooFitResult *fitRes = MakeLikelihood(fitFun, chMom, nsig, recomom);
     
     //make fit plots
     MakePlots(recomom, chMom, fitFun, tag, recocuts);
+    
+    recoresult = make_tuple(nsig.getValV(), ndio.getValV(), ncosmics.getValV(), 0);
+    
+    std::cout<<" derived Rmue "<<ReturnRmu(nsig,ndio)<<std::endl;
     return fitRes;
 }
