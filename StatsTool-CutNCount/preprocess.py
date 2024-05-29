@@ -23,17 +23,16 @@ def preprocessing1(branches):
     branches = branches[branches['ntrk_cut']]
     
     # reconstructed track momentum
+    # three values per entry: start, middle, end of tracker
     branches['demfit_mom'] = np.sqrt((branches['demfit']['mom']['fCoordinates']['fX'])**2 +
                                  (branches['demfit']['mom']['fCoordinates']['fY'])**2 + 
                                  (branches['demfit']['mom']['fCoordinates']['fZ'])**2)
-    # three values per entry: start, middle, end of tracker
-    # here looking at reconstructed momentum at start of tracker
-    branches['demfit_mom0'] = branches['demfit_mom'][branches['demfit']['sid']==0]
+    # reconstructed momentum at start of tracker
+    branches['demfit_mom0'] = branches['demfit_mom'][branches['demfit','sid']==0]
+    # time from demfit at start of tracker
+    branches['demfit_t0'] = branches['demfit','time'][branches['demfit','sid']==0]
 
     return branches
-
-
-
 
 
 

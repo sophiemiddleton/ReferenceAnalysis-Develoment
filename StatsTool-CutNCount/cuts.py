@@ -21,7 +21,10 @@ class Cuts() :
             self.cutsdict =  {
                 # signal momentum window from SU2020 Universe report
                 'demfit_mom0' : [103.6,104.9],
+                # signal window start and end times
+                'demfit_t0' : [700, 1695], # testing on demfit time at start of tracker
                 # implement additional cuts
+                # 
             }
 
     def ApplyCut(self, df):
@@ -40,8 +43,6 @@ class Cuts() :
             else: # upper and lower limits
                 data[keycut] = (data[key]>value[0]) & (data[key]<value[1])
         return data
-
-
 
 
 

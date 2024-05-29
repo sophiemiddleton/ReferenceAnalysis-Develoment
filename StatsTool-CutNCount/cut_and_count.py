@@ -14,26 +14,26 @@ def cut_and_count(args):
     # load data
     filelist = os.path.join(args.folder,args.dataset)
     recodata = ImportRecoData(filelist, opt='testing')
-    branches = recodata.Import_RecoFits("demfit", "demlh")
+    branches = recodata.Import_RecoFits(["demfit", "demlh"])
     branches = preprocess.preprocessing1(branches)
 
     # apply cuts
     branches = recodata.cuts.apply_cuts_indicator(branches)
+    cut_results = [branches[c+'_cut'] for c in recodata.cuts.cutsdict.keys()]
 
     # count events inside and outside signal window
-    # future versions will include additional cuts
-    signal_count = np.sum(branches['demfit_mom0_cut'])
+    signal_count = np.prod(cut_results,axis=0).sum()
     nonsignal_count = len(branches) - signal_count
     print(f'Events in signal window: {signal_count}')
     print(f'Events outside signal window: {nonsignal_count}')
 
     # view results
-    plots = ['sig', 'other']
-    labels = dict(zip(plots,['%i non-signal events' %nonsignal_count,'%i events in signal window' %signal_count]))
-    cuts_legend = [['Signal momentum window',
-                        f'p = {tuple(recodata.cuts.cutsdict["demfit_mom0"])} MeV/c',],
-                       ['Placeholder','additional SU2020 parameters',]  ]
-    PlotRecoMomEnt2(branches, args.mom_low,args.mom_high,labels=labels,plots=plots,cuts_legend=cuts_legend)
+    plots=['sig','other']
+    labels = dict(zip(plots,['%i non-signal events' %nonsignal_count,'%i signal events' %signal_count]))
+    cuts_legend = [['Momentum', f'p = {tuple(recodata.cuts.cutsdict["demfit_mom0"])} MeV/c',],
+               ['Time', f't0 = {tuple(recodata.cuts.cutsdict["demfit_t0"])} ns', ],
+               ['Placeholder','additional SU2020 parameters',]  ]
+    PlotRecoMomEnt2(branches, args.mom_low,args.mom_high,labels,plots,cuts_legend,cut_results)
 
 
 if __name__ == "__main__":
