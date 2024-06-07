@@ -2,7 +2,7 @@
 import uproot
 
 from cuts import Cuts
-
+from mctruth import MCTruth
 
 class ImportRecoData :
 
@@ -12,6 +12,7 @@ class ImportRecoData :
         self.treeName = treeName
         self.branchName = branchName
         self.cuts = Cuts(opt=opt)
+        self.mctruth = MCTruth()
 
     def Import_RecoFits(self, leafs):
         """ import reconstructed trk ana"""

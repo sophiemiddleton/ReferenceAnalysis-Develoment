@@ -18,11 +18,14 @@ class Cuts() :
                       "dequal.TrkQual" : [0.2, float("inf")],  #TrkQual
                     }
         if opt=='testing':
+            # cuts applied to parameters at start of tracker (demfit sid = 0)
             self.cutsdict =  {
                 # signal momentum window from SU2020 Universe report
                 'demfit_mom0' : [103.6,104.9],
                 # signal window start and end times
-                'demfit_t0' : [700, 1695], # testing on demfit time at start of tracker
+                'demfit_t0' : [640, 1650], 
+                # maximum radius range
+                'demlh_maxr0' : [450,680],
                 # implement additional cuts
                 # 
             }

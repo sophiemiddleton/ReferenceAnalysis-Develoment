@@ -12,7 +12,16 @@ def bin_errorbars(ax,n,bins,color):
       yerrs.append(np.sqrt(j))
     ax.errorbar(bin_centers, n, yerr=np.sqrt(n), fmt=color+'.')
     
-
+def plottable(matrix,rowlabels,collabels):
+    fig,ax = plt.subplots()
+    table = ax.table(matrix,
+                     rowLabels=rowlabels,
+                     colLabels=collabels,
+                     loc='center');
+    plt.subplots_adjust(left=0.3, top=0.3)
+    ax.axis("off")
+    table.scale(1,6);
+    plt.show()
 
 # will be updated to include additional cuts and fewer hardcoded parameters
 def PlotRecoMomEnt2(branches, low, hi,labels,plots,cuts_legend,cut_results):

@@ -3,6 +3,7 @@
 import numpy as np
 import argparse
 import os.path
+import awkward as ak
 
 from recodata import ImportRecoData
 import preprocess
@@ -14,7 +15,7 @@ def cut_and_count(args):
     # load data
     filelist = os.path.join(args.folder,args.dataset)
     recodata = ImportRecoData(filelist, opt='testing')
-    branches = recodata.Import_RecoFits(["demfit", "demlh"])
+    branches = recodata.Import_RecoFits(["demfit", "demlh", 'demmcsim','demtrkqual'])
     branches = preprocess.preprocessing1(branches)
 
     # apply cuts
@@ -30,11 +31,19 @@ def cut_and_count(args):
     # view results
     plots=['sig','other']
     labels = dict(zip(plots,['%i non-signal events' %nonsignal_count,'%i signal events' %signal_count]))
-    cuts_legend = [['Momentum', f'p = {tuple(recodata.cuts.cutsdict["demfit_mom0"])} MeV/c',],
-               ['Time', f't0 = {tuple(recodata.cuts.cutsdict["demfit_t0"])} ns', ],
-               ['Placeholder','additional SU2020 parameters',]  ]
+    cuts_legend = [['Momentum',f'p = {tuple(recodata.cuts.cutsdict["demfit_mom0"])} MeV/c',],
+                   ['Time',f't0 = {tuple(recodata.cuts.cutsdict["demfit_t0"])} ns', ],
+                    ['Maximum Radius',f'r = {tuple(recodata.cuts.cutsdict["demlh_maxr0"])} mm', ],
+    ]
+        #  ['Placeholder','cuts on additional parameters',]  ]
     PlotRecoMomEnt2(branches, args.mom_low,args.mom_high,labels,plots,cuts_legend,cut_results)
 
+    # compare with mc truth info for particle type
+    cut_results_f = ak.flatten(ak.prod(cut_results,axis=0),axis=None)
+    cmat = recodata.mctruth.confusion_matrix(branches,cut_results_f)
+    print('MC truth comparison:')
+    recodata.mctruth.display_matrix(cmat,modes=['pd'])#,'plot'])#,'print'])
+    
 
 if __name__ == "__main__":
 
