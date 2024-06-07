@@ -2,7 +2,7 @@
 
 
 import numpy as np
-
+import awkward as ak
 
 class Cuts() :
 
@@ -26,8 +26,10 @@ class Cuts() :
                 'demfit_t0' : [640, 1650], 
                 # maximum radius range
                 'demlh_maxr0' : [450,680],
-                # implement additional cuts
-                # 
+                # track quality
+                'demtrkqual_result' : [0.2,1.0],
+                # number of hits
+                'dem.nactive' : [20,np.inf],
             }
 
     def ApplyCut(self, df):
@@ -43,8 +45,9 @@ class Cuts() :
             keycut = key+'_cut'
             if np.size(value)==1: # single value to match
                 data[keycut] = data[key]==value
-            else: # upper and lower limits
-                data[keycut] = (data[key]>value[0]) & (data[key]<value[1])
+            else: # upper and/or lower limits
+                # flattening assumes just looking at one track per event
+                data[keycut] = ak.flatten((data[key]>value[0]) & (data[key]<value[1]), axis=None)
         return data
 
 

@@ -15,7 +15,7 @@ def cut_and_count(args):
     # load data
     filelist = os.path.join(args.folder,args.dataset)
     recodata = ImportRecoData(filelist, opt='testing')
-    branches = recodata.Import_RecoFits(["demfit", "demlh", 'demmcsim','demtrkqual'])
+    branches = recodata.Import_RecoFits(["demfit", "demlh", 'demmcsim','demtrkqual.result','dem.nactive'])
     branches = preprocess.preprocessing1(branches)
 
     # apply cuts
@@ -34,13 +34,13 @@ def cut_and_count(args):
     cuts_legend = [['Momentum',f'p = {tuple(recodata.cuts.cutsdict["demfit_mom0"])} MeV/c',],
                    ['Time',f't0 = {tuple(recodata.cuts.cutsdict["demfit_t0"])} ns', ],
                     ['Maximum Radius',f'r = {tuple(recodata.cuts.cutsdict["demlh_maxr0"])} mm', ],
+                    ['Track Quality Score', f'q = {tuple(recodata.cuts.cutsdict["demtrkqual_result"])}', ],
+                    ['Active Hits', f'n = {tuple(recodata.cuts.cutsdict["dem.nactive"])}', ],
     ]
-        #  ['Placeholder','cuts on additional parameters',]  ]
     PlotRecoMomEnt2(branches, args.mom_low,args.mom_high,labels,plots,cuts_legend,cut_results)
 
     # compare with mc truth info for particle type
-    cut_results_f = ak.flatten(ak.prod(cut_results,axis=0),axis=None)
-    cmat = recodata.mctruth.confusion_matrix(branches,cut_results_f)
+    cmat = recodata.mctruth.confusion_matrix(branches,ak.prod(cut_results,axis=0))
     print('MC truth comparison:')
     recodata.mctruth.display_matrix(cmat,modes=['pd'])#,'plot'])#,'print'])
     
