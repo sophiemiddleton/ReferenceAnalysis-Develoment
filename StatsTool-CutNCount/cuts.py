@@ -2,7 +2,7 @@
 
 
 import numpy as np
-
+import awkward as ak
 
 class Cuts() :
 
@@ -18,13 +18,18 @@ class Cuts() :
                       "dequal.TrkQual" : [0.2, float("inf")],  #TrkQual
                     }
         if opt=='testing':
+            # cuts applied to parameters at start of tracker (demfit sid = 0)
             self.cutsdict =  {
                 # signal momentum window from SU2020 Universe report
                 'demfit_mom0' : [103.6,104.9],
                 # signal window start and end times
-                'demfit_t0' : [700, 1695], # testing on demfit time at start of tracker
-                # implement additional cuts
-                # 
+                'demfit_t0' : [640, 1650], 
+                # maximum radius range
+                'demlh_maxr0' : [450,680],
+                # track quality
+                'demtrkqual_result' : [0.2,1.0],
+                # number of hits
+                'dem.nactive' : [20,np.inf],
             }
 
     def ApplyCut(self, df):
@@ -40,8 +45,9 @@ class Cuts() :
             keycut = key+'_cut'
             if np.size(value)==1: # single value to match
                 data[keycut] = data[key]==value
-            else: # upper and lower limits
-                data[keycut] = (data[key]>value[0]) & (data[key]<value[1])
+            else: # upper and/or lower limits
+                # flattening assumes just looking at one track per event
+                data[keycut] = ak.flatten((data[key]>value[0]) & (data[key]<value[1]), axis=None)
         return data
 
 

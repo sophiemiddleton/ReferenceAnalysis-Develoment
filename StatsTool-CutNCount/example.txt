@@ -1,2 +1,6 @@
-example:
+
+example: 
 python cut_and_count.py --folder "/pnfs/mu2e/tape/phy-nts/nts/mu2e/ensemble-MixBB-CEDIO-1month-p95MeVc-Triggered/MDC2020ad_perfect_v1_2/tka/18/96" --dataset "nts.mu2e.ensemble-MixBB-CEDIO-1month-p95MeVc-Triggered.MDC2020ad_perfect_v1_2.0.tka" --treename "TrkAna" --branchname "trkana" --mom_low 95 --mom_hi 105
+
+
+

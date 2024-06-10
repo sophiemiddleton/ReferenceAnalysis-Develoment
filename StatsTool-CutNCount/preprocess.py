@@ -22,8 +22,7 @@ def preprocessing1(branches):
     branches = apply_cuts(branches, {'ntrk' : 1})
     branches = branches[branches['ntrk_cut']]
     
-    # reconstructed track momentum
-    # three values per entry: start, middle, end of tracker
+    # reconstructed track momentum (start, middle, end of tracker)
     branches['demfit_mom'] = np.sqrt((branches['demfit']['mom']['fCoordinates']['fX'])**2 +
                                  (branches['demfit']['mom']['fCoordinates']['fY'])**2 + 
                                  (branches['demfit']['mom']['fCoordinates']['fZ'])**2)
@@ -31,7 +30,14 @@ def preprocessing1(branches):
     branches['demfit_mom0'] = branches['demfit_mom'][branches['demfit','sid']==0]
     # time from demfit at start of tracker
     branches['demfit_t0'] = branches['demfit','time'][branches['demfit','sid']==0]
+    # maximum radius from demlh at start of tracker
+    branches['demlh_maxr0'] = branches['demlh','maxr'][branches['demfit','sid']==0]
+    # track quality # find a way to rename in place
+    branches['demtrkqual_result'] = branches['result'] 
 
+    # first process for each event is CE or DIO in this data sample
+    branches['mcproc1'] = branches['demmcsim','startCode'][:,0,0]
+    
     return branches
 
 
