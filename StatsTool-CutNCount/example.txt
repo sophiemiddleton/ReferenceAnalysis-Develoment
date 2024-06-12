@@ -1,6 +1,10 @@
 
-example: 
+example with CE and DIO only (pass0a): 
 python cut_and_count.py --folder "/pnfs/mu2e/tape/phy-nts/nts/mu2e/ensemble-MixBB-CEDIO-1month-p95MeVc-Triggered/MDC2020ad_perfect_v1_2/tka/18/96" --dataset "nts.mu2e.ensemble-MixBB-CEDIO-1month-p95MeVc-Triggered.MDC2020ad_perfect_v1_2.0.tka" --treename "TrkAna" --branchname "trkana" --mom_low 95 --mom_hi 105
+
+example with CE, DIO, cosmics (pass0b):
+python cut_and_count.py --folder "/exp/mu2e/app/users/sophie/ProductionEnsembles_v2/py-ana/trkana" --dataset "pass0b.root" --treename "TrkAna" --branchname "trkana" --mom_low 95 --mom_hi 105 --use_crv True --data_description "pass0b"
+
 
 
 
