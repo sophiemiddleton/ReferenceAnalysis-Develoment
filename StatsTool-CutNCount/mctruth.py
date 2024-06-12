@@ -6,13 +6,14 @@ from plots import plottable
 
 class MCTruth():
 
-    def __init__(self, ):
+    def __init__(self, cuts):
         # process codes inferred from MCDataProducts/inc/ProcessCode.hh
         # currently just dealing with CE and DIO as first particle
         self.startcodes1 = { "CE" : 167,   # mu2eCeMinusEndpoint
                             "DIO" : 166,  # mu2eMuonDecayAtRest
                          }
         self.predlabels = ['Background','Signal']
+        self.cuts = cuts
 
     def confusion_matrix(self,data,cut_results,plot=True,printout=True,pdview=False):
         """ confusion matrix between true particle (rows) and background/signal prediction (columns)"""
@@ -35,4 +36,22 @@ class MCTruth():
             mat_df = pd.DataFrame(mat,index=list(self.startcodes1.keys()),columns=self.predlabels)
             print(mat_df)
 
+    def cut_survival(self,data,cut_results,other=True):
+        """ for each MC truth particle type or category (columns), determine whether track passes 
+        each cut with cuts applied sequentially (rows)"""
+        # whether track survives each sequential cut
+        survival = np.cumprod(np.array(cut_results),axis=0)
+        # MC truth first process for each surviving track
+        survival=np.array(data['mcproc1']) * survival
+        survival = survival[:,np.unique(np.nonzero(survival)[1])]
 
+        # look at some specific process types and leave rest in other category
+        survival_table = pd.DataFrame(index=self.cuts.cutsdict.keys())
+        if other: otherproc1 = np.unique(data['mcproc1'])
+        for particletype in self.startcodes1.keys():
+            survival_table[particletype] = np.count_nonzero(survival==self.startcodes1[particletype],axis=1)
+            if other: otherproc1 = otherproc1[otherproc1!=self.startcodes1[particletype]]
+        # other processes from cosmic rays currently combined into one category
+        if other: survival_table['Other'] = np.count_nonzero((survival!=0) & 
+                                                   (np.sum([survival==p for p in otherproc1],axis=0)),axis=1)        
+        return survival_table

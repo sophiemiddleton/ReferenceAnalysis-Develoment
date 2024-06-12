@@ -20,17 +20,19 @@ class Cuts() :
         if opt=='testing':
             # cuts applied to parameters at start of tracker (demfit sid = 0)
             self.cutsdict =  {
+                # number of hits
+                'dem.nactive' : [20,np.inf],
+                # track quality
+                'demtrkqual_result' : [0.2,1.0],
                 # signal momentum window from SU2020 Universe report
                 'demfit_mom0' : [103.6,104.9],
                 # signal window start and end times
                 'demfit_t0' : [640, 1650], 
                 # maximum radius range
                 'demlh_maxr0' : [450,680],
-                # track quality
-                'demtrkqual_result' : [0.2,1.0],
-                # number of hits
-                'dem.nactive' : [20,np.inf],
             }
+            if self.use_CRV:
+                self.cutsdict['crv_timediff'] = [150,np.inf]
 
     def ApplyCut(self, df):
         df_cut = df

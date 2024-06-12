@@ -23,8 +23,8 @@ def plottable(matrix,rowlabels,collabels):
     table.scale(1,6);
     plt.show()
 
-# will be updated to include additional cuts and fewer hardcoded parameters
-def PlotRecoMomEnt2(branches, low, hi,labels,plots,cuts_legend,cut_results):
+
+def PlotRecoMomEnt2(branches, low, hi,labels,plots,cuts_legend,cut_results,data_description):
     """ visualize results of cut and count """
     fig, axs = plt.subplots(1,2,width_ratios=(3,1),figsize=(8,4))
     colors = dict(zip(plots,['b','g']))
@@ -44,7 +44,7 @@ def PlotRecoMomEnt2(branches, low, hi,labels,plots,cuts_legend,cut_results):
     bin_errorbars(axs[0],n2,bins2,color=colors['other'])
     
     # add in style features:
-    axs[0].set_title('Cut and Count with SU2020 Parameters')
+    axs[0].set_title(f'Cut and Count for {data_description}')
     axs[0].set_yscale('log')
     axs[0].set_xlabel('Reconstructed Momentum at Tracker Entrance [MeV/c]')
     axs[0].set_ylabel('Entries per bin')
@@ -52,11 +52,11 @@ def PlotRecoMomEnt2(branches, low, hi,labels,plots,cuts_legend,cut_results):
     axs[0].legend()
     # second axis for cuts legend. placeholder for listing more cuts
     axs[1].set_axis_off()
-    axs[1].text(0,0.95,'Cuts Applied to Signal Window')
+    axs[1].text(0,1.05,'Cuts Applied to Signal Window')
     for i,s in enumerate(cuts_legend):
         offset=0.18*(i+1)
-        axs[1].text(0,1-offset,s[0])
-        axs[1].text(0,1-offset-0.06,s[1])
+        axs[1].text(0,1.1-offset,s[0])
+        axs[1].text(0,1.1-offset-0.06,s[1])
         
     plt.show()
 

@@ -1,7 +1,7 @@
 
 
 import numpy as np
-
+import awkward as ak
 
    
 def apply_cuts(data,cutsdict):
@@ -16,11 +16,13 @@ def apply_cuts(data,cutsdict):
     return data
 
 
-def preprocessing1(branches):
+def preprocessing1(branches,use_crv=False):
     # only looking at events with one reconstructed track
     branches['ntrk'] = [len(p) for p in branches['demfit']['sid']]
     branches = apply_cuts(branches, {'ntrk' : 1})
     branches = branches[branches['ntrk_cut']]
+    # skip events with missing reconstructed momentum components (nan track quality)
+    branches = branches[~np.isnan(branches['result'])]
     
     # reconstructed track momentum (start, middle, end of tracker)
     branches['demfit_mom'] = np.sqrt((branches['demfit']['mom']['fCoordinates']['fX'])**2 +
@@ -33,9 +35,14 @@ def preprocessing1(branches):
     # maximum radius from demlh at start of tracker
     branches['demlh_maxr0'] = branches['demlh','maxr'][branches['demfit','sid']==0]
     # track quality # find a way to rename in place
-    branches['demtrkqual_result'] = branches['result'] 
-
-    # first process for each event is CE or DIO in this data sample
+    branches['demtrkqual_result'] = branches['result']
+    # CRV time difference
+    if use_crv:
+        branches['crv_timediff'] = branches['demfit_t0'] - ak.max(branches['crvcoincs.time'],axis=-1)
+        # filling none entries with large time diff as placeholder
+        branches['crv_timediff']=ak.fill_none(branches['crv_timediff'],[[1e6]],axis=0)
+     
+    # first process for each event
     branches['mcproc1'] = branches['demmcsim','startCode'][:,0,0]
     
     return branches

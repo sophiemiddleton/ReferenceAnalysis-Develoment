@@ -6,13 +6,13 @@ from mctruth import MCTruth
 
 class ImportRecoData :
 
-    def __init__(self, fileName, treeName="TrkAna", branchName="trkana", opt='su2020'):
+    def __init__(self, fileName, treeName="TrkAna", branchName="trkana", opt='su2020',use_crv=False):
         """ Initialise the Class Object """
         self.fileName = fileName
         self.treeName = treeName
         self.branchName = branchName
-        self.cuts = Cuts(opt=opt)
-        self.mctruth = MCTruth()
+        self.cuts = Cuts(opt,use_crv)
+        self.mctruth = MCTruth(self.cuts)
 
     def Import_RecoFits(self, leafs):
         """ import reconstructed trk ana"""
